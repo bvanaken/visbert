@@ -1,0 +1,265 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="http://nitinhayaran.github.io/jRange/jquery.range.css">
+    <link rel="stylesheet" href="/static/style.css">
+
+    <title>How Does BERT Answer Questions?</title>
+
+</head>
+
+<body>
+<div><h2 class="title">How Does BERT Answer Questions?</h2></div>
+
+<div id="tab-wrapper">
+    <div id="main-tab">SQuAD</div>
+    <div id="tab-rest"></div>
+</div>
+
+<div class="question-form-container" align="center">
+    <div class="row">
+        <div class="col" align="left">
+
+            <span class="id-switcher-label" onclick="switchIdLeft()"><</span>
+            <input type="text" id="id-input" name="id-input" class="id-switcher-input">
+            <span class="id-switcher-label" onclick="switchIdRight()">></span><br>
+
+            <label class="control-label form-label" for="question-textarea">Question</label>
+            <textarea class="form-control form-textarea" id="question-textarea" name="question-textarea"
+                      rows="2"></textarea>
+            <label class="control-label form-label" for="ground-truth-answer">Ground Truth Answer</label>
+            <input type="text" class="form-control" id="ground-truth-answer" name="ground-truth-answer">
+            <label class="control-label form-label" for="predicted-answer">Predicted Answer</label>
+            <input type="text" class="form-control" id="predicted-answer" name="predicted-answer">
+
+        </div>
+        <div class="col">
+            <label class="control-label form-label" for="context-textarea">Context</label>
+            <textarea class="form-control form-textarea" id="context-textarea" name="context-textarea"
+                      rows="7"></textarea>
+            <button class="form-button btn btn-info btn-block" onclick="requestPredictionAndVis()">Predict & Visualize
+            </button>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="slider-container"><input type="range" id="layer_nr_slider" min=0 max=12 step=1 value=0/><span
+        class="form-label layer-label" id="layer_nr_label">Layer 0</span>
+</div>
+</div>
+
+<div class="canvas-container">
+    <canvas id="plot_canvas"></canvas>
+</div>
+
+
+<!-- JQuery Import - Placed at the end of the document so the pages load faster -->
+<script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.6.0"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/0.6.3/chartjs-plugin-zoom.js"></script>
+
+<script>
+
+    var squad_example = {
+        "_id": "56e20a27cd28a01900c67c24",
+        "question": "Which NFL team represented the AFC at Super Bowl 50?",
+        "context": "Super Bowl 50 was an American football game to determine the champion of the National Football League (NFL) for the 2015 season. The American Football Conference (AFC) champion Denver Broncos defeated the National Football Conference (NFC) champion Carolina Panthers 24\u201310 to earn their third Super Bowl title. The game was played on February 7, 2016, at Levi's Stadium in the San Francisco Bay Area at Santa Clara, California. As this was the 50th Super Bowl, the league emphasized the \"golden anniversary\" with various gold-themed initiatives, as well as temporarily suspending the tradition of naming each Super Bowl game with Roman numerals (under which the game would have been known as \"Super Bowl L\"), so that the logo could prominently feature the Arabic numerals 50.",
+        "answer": {
+            "text": "Denver Broncos",
+            "answer_start": 177
+        }
+    };
+
+    var color = Chart.helpers.color;
+    var scatterChartData = {
+        datasets: [{
+            pointBackgroundColor: [],
+            pointBorderColor: [],
+            data: []
+        }],
+    };
+
+    var layer_nr = 0;
+    var hiddenStates = [];
+    var scatterPlot;
+    var samples;
+    var currentSampleIndex = 0;
+
+    function refreshData(newData, scatterPlot, questionIndices) {
+        scatterChartData.datasets[0].data = newData;
+
+        if (questionIndices != null) {
+            colorTokens(questionIndices);
+        }
+        scatterPlot.update();
+    }
+
+    function insertSample(sample) {
+        $('#id-input').val(sample.id);
+        $('#question-textarea').val(sample.question);
+        $('#ground-truth-answer').val(sample.answer);
+        $('#predicted-answer').val("");
+        $('#context-textarea').val(sample.context);
+    }
+
+    function parseText(component) {
+
+        function trim(s) {
+            return (s || '').replace(/^\s+|\s+$/g, '');
+        }
+
+        var text = component.val();
+        text = encodeURIComponent(text);
+
+        // Remove linebreaks from input
+        text = text.replace(/\n/g, " ");
+
+        // Remove quotes from input
+        text = text.replace(/\"/g, "'");
+
+        text = trim(text);
+
+        return text;
+    }
+
+    function colorTokens(questionIndices) {
+        for (let i = 0; i < scatterChartData.datasets[0].data.length; i++) {
+
+            if (i >= questionIndices.start_index && i < questionIndices.end_index) {
+
+                scatterChartData.datasets[0].pointBackgroundColor[i] = color('blue').alpha(0.2).rgbString();
+                scatterChartData.datasets[0].pointBorderColor[i] = 'blue';
+            } else {
+                scatterChartData.datasets[0].pointBackgroundColor[i] = color('red').alpha(0.2).rgbString();
+                scatterChartData.datasets[0].pointBorderColor[i] = 'red';
+            }
+        }
+    }
+
+
+    function processResult(data) {
+        var predictedAnswer = data.prediction.text;
+
+        $('#predicted-answer').val(predictedAnswer);
+
+        hiddenStates = data.hidden_states;
+
+        $("#layer_nr_slider").val(0);
+        refreshLayerNr(0);
+
+        refreshData(hiddenStates[0], scatterPlot, data.question_indices);
+    }
+
+    function requestPredictionAndVis() {
+
+        var sample = {};
+
+        sample.id = parseText($('#id-input'));
+        sample.question = parseText($('#question-textarea'));
+        sample.context = parseText($('#context-textarea'));
+        sample.answer = parseText($('#ground-truth-answer'));
+
+        var data = {};
+        data.sample = sample;
+
+        $.ajax({
+            url: '/visbert/predict',
+            type: 'post',
+            data: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            dataType: 'json',
+            success: function (data) {
+                processResult(data);
+            }
+        });
+    }
+
+    function loadSamples() {
+        $.getJSON("../static/squad_examples.json", function (json) {
+            samples = json;
+            currentSampleIndex = Math.floor(Math.random() * samples.length);
+            insertSample(samples[currentSampleIndex]);
+        });
+    }
+
+    function switchIdLeft() {
+        if (currentSampleIndex > 0) {
+            currentSampleIndex = currentSampleIndex - 1;
+            insertSample(samples[currentSampleIndex]);
+        }
+    }
+
+    function switchIdRight() {
+        if (currentSampleIndex < samples.length - 1) {
+            currentSampleIndex = currentSampleIndex + 1;
+            insertSample(samples[currentSampleIndex]);
+        }
+    }
+
+    function refreshLayerNr(new_layer_nr) {
+        layer_nr = new_layer_nr;
+
+        $("#layer_nr_label").text("Layer " + layer_nr);
+    }
+
+    $(document).ready(function () {
+
+        $("#layer_nr_slider").val(0);
+        loadSamples();
+
+        var ctx = $('#plot_canvas');
+        scatterPlot = Chart.Scatter(ctx, {
+            data: scatterChartData,
+            options: {
+                tooltips: {
+                    callbacks: {
+                        label: function (tooltipItem, data) {
+                            return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].label;
+                        }
+                    }
+                },
+                plugins: {
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'right',
+                        color: 'grey',
+                        offset: 8,
+                        padding: 0,
+                        clamp: true
+                    },
+                    legend: false,
+                    title: false
+                }
+            }
+        });
+
+        $("#layer_nr_slider").on("input change", function () {
+            var new_layer_nr = $(this).val();
+
+            if (new_layer_nr !== layer_nr) {
+                refreshLayerNr(new_layer_nr);
+
+                if (hiddenStates.length > layer_nr) {
+                    refreshData(hiddenStates[layer_nr], scatterPlot, null);
+                }
+            }
+        });
+
+    });
+</script>
+</body>
+
+</html>
