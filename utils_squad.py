@@ -180,20 +180,20 @@ def convert_example_to_features(example, tokenizer, max_seq_length,
             tok_to_orig_index.append(i)
             all_doc_tokens.append(sub_token)
 
-    tok_start_position = None
-    tok_end_position = None
-    if is_training and example.is_impossible:
-        tok_start_position = -1
-        tok_end_position = -1
-    if is_training and not example.is_impossible:
-        tok_start_position = orig_to_tok_index[example.start_position]
-        if example.end_position < len(example.doc_tokens) - 1:
-            tok_end_position = orig_to_tok_index[example.end_position + 1] - 1
-        else:
-            tok_end_position = len(all_doc_tokens) - 1
-        (tok_start_position, tok_end_position) = _improve_answer_span(
-            all_doc_tokens, tok_start_position, tok_end_position, tokenizer,
-            example.orig_answer_text)
+    # tok_start_position = None
+    # tok_end_position = None
+    #
+    # tok_start_position = -1
+    # tok_end_position = -1
+
+    tok_start_position = orig_to_tok_index[example.start_position]
+    if example.end_position < len(example.doc_tokens) - 1:
+        tok_end_position = orig_to_tok_index[example.end_position + 1] - 1
+    else:
+        tok_end_position = len(all_doc_tokens) - 1
+    (tok_start_position, tok_end_position) = _improve_answer_span(
+        all_doc_tokens, tok_start_position, tok_end_position, tokenizer,
+        example.orig_answer_text)
 
     # The -3 accounts for [CLS], [SEP] and [SEP]
     max_tokens_for_doc = max_seq_length - len(query_tokens) - 3
@@ -287,7 +287,7 @@ def convert_example_to_features(example, tokenizer, max_seq_length,
         span_is_impossible = example.is_impossible
         start_position = None
         end_position = None
-        if is_training and not span_is_impossible:
+        if not span_is_impossible:
             # For training, if our document chunk does not contain an annotation
             # we throw it out, since there is nothing to predict.
             doc_start = doc_span.start
@@ -305,7 +305,7 @@ def convert_example_to_features(example, tokenizer, max_seq_length,
                 start_position = tok_start_position - doc_start + doc_offset
                 end_position = tok_end_position - doc_start + doc_offset
 
-        if is_training and span_is_impossible:
+        if span_is_impossible:
             start_position = cls_index
             end_position = cls_index
 
@@ -323,9 +323,9 @@ def convert_example_to_features(example, tokenizer, max_seq_length,
             "input_mask: %s" % " ".join([str(x) for x in input_mask]))
         logger.info(
             "segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-        if is_training and span_is_impossible:
+        if span_is_impossible:
             logger.info("impossible example")
-        if is_training and not span_is_impossible:
+        if not span_is_impossible:
             answer_text = " ".join(tokens[start_position:(end_position + 1)])
             logger.info("start_position: %d" % (start_position))
             logger.info("end_position: %d" % (end_position))
@@ -684,5 +684,9 @@ def _compute_softmax(scores):
 def get_question_indices(tokens):
     sep_token = '[SEP]'
     start_index = 1
-    end_index = tokens.index(sep_token) - 1
+    end_index = tokens.index(sep_token)
     return start_index, end_index
+
+
+def get_answer_indices(features):
+    return features.start_position, features.end_position + 1

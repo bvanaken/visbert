@@ -6,7 +6,7 @@ import visualize
 import logging
 import os
 from utils import decode_text
-from utils_squad import get_question_indices
+from utils_squad import get_question_indices, get_answer_indices
 import argparse
 
 FORMAT = '%(asctime)-15s %(message)s'
@@ -24,7 +24,7 @@ def index():
 
 
 @app.route(base_route + "/predict", methods=['POST'])
-def get_prediction():
+def get_output():
     data = request.get_json()
 
     logger.info(data)
@@ -46,23 +46,22 @@ def get_prediction():
               "context": context,
               "answer": answer_dict}
 
-    prediction, layers, question_indices = predict(sample)
+    prediction, layers, token_indices = generate_model_output(sample)
 
     output = {
         'hidden_states': layers,
         'prediction': prediction,
-        'question_indices': {
-            'start_index': question_indices[0],
-            'end_index': question_indices[1],
-        }
+        'token_indices': token_indices
     }
 
     return jsonify(output)
 
 
-def predict(sample):
-    prediction, hidden_states, tokens = model.predict(sample)
+def generate_model_output(sample):
+    prediction, hidden_states, features = model.tokenize_and_predict(sample)
 
+    # build pca-layer list from hidden states
+    tokens = features.tokens
     layers = []
     for layer in hidden_states:
 
@@ -75,8 +74,6 @@ def predict(sample):
         # build json with point information
         points = []
         for i, val in enumerate(layer_reduced[0]):
-            logger.info("{}, {}".format(val, layer_reduced[1][i]))
-
             point = {
                 'x': val,
                 'y': layer_reduced[1][i],
@@ -87,7 +84,23 @@ def predict(sample):
 
         layers.append(points)
 
-    return prediction, layers, get_question_indices(tokens)
+    # build indices object
+    question_indices = get_question_indices(tokens)
+    # answer_indices = get_answer_indices(features) ## Decide whether to highlight ground truth or predicted answer
+    answer_indices = prediction["start_index"], prediction["end_index"] + 1
+
+    token_indices = {
+        'question': {
+            'start': question_indices[0],
+            'end': question_indices[1],
+        },
+        'answer': {
+            'start': answer_indices[0],
+            'end': answer_indices[1],
+        }
+    }
+
+    return prediction, layers, token_indices
 
 
 def run():
@@ -99,7 +112,7 @@ def run():
     model.init()
 
     logger.debug("Run app")
-    app.run("0.0.0.0", port=1337)
+    app.run(host='localhost', port=1337)
     # waitress.serve(app.run("0.0.0.0", port=1337))
 
 

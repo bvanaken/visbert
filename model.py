@@ -44,7 +44,7 @@ def parse_model_output(output, example, features):
     return nbest_predictions[0], output[2]  # top prediction, hidden states
 
 
-def predict(sample):
+def tokenize_and_predict(sample):
     example = read_squad_example(sample)
 
     input_features = tokenize(example, tokenizer)
@@ -69,7 +69,7 @@ def predict(sample):
         logger.info("Predicted Answer: {}".format(prediction["text"]))
         logger.info("Start token: {}, End token: {}".format(prediction["start_index"], prediction["end_index"]))
 
-        return prediction, hidden_states, input_features.tokens
+        return prediction, hidden_states, input_features
 
 
 def tokenize(example, tokenizer):
@@ -79,6 +79,9 @@ def tokenize(example, tokenizer):
                                            doc_stride=128,
                                            max_query_length=64,
                                            is_training=False)
+
+    print(features.start_position)
+    print(features.end_position)
 
     features.input_ids = torch.tensor([features.input_ids], dtype=torch.long)
     features.input_mask = torch.tensor([features.input_mask], dtype=torch.long)
