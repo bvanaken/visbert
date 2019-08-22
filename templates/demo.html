@@ -19,14 +19,16 @@
 
 <body>
 <div><h2 class="title">How Does BERT Answer Questions?</h2></div>
-<p class="intro-text">Observe how BERT models fine-tuned on QA tasks get to the right answers. This demo shows how the token
-    representations change throughout the layers of BERT. It demonstrates the findings from our paper: <i>Betty van Aken, Benjamin Winter, Alexander Löser and Felix Gers.
-    <a href="https://openreview.net/pdf?id=SygMXE2vAE" target="_blank">How Does BERT Answer Questions? A Layer-Wise Analysis of Transformer Representations.</a> CIKM 2019.</i></p>
+<p class="intro-text">Observe how BERT fine-tuned on QA tasks get to the right answers. This demo shows how the token
+    representations change throughout the layers of BERT. It demonstrates the findings from our paper: <i>Betty van
+        Aken, Benjamin Winter, Alexander Löser and Felix Gers.
+        <a href="https://openreview.net/pdf?id=SygMXE2vAE" target="_blank">How Does BERT Answer Questions? A Layer-Wise
+            Analysis of Transformer Representations.</a> CIKM 2019.</i></p>
 
 <div class="d-flex task-tab-wrapper">
-  <div class="p-2 flex-fill task-tab-active">SQuAD</div>
-  <div class="p-2 flex-fill task-tab">HotpotQA</div>
-  <div class="p-2 flex-fill task-tab">bAbI QA</div>
+    <div class="p-2 flex-fill task-tab-active">SQuAD</div>
+    <div class="p-2 flex-fill task-tab">HotpotQA</div>
+    <div class="p-2 flex-fill task-tab">bAbI QA</div>
 </div>
 <div class="question-form-container" align="center">
     <div class="row">
@@ -42,7 +44,7 @@
             <label class="control-label form-label" for="ground-truth-answer">Ground Truth Answer</label>
             <input type="text" class="form-control" id="ground-truth-answer" name="ground-truth-answer">
             <label class="control-label form-label" for="predicted-answer">Predicted Answer</label>
-            <input type="text" class="form-control" id="predicted-answer" name="predicted-answer">
+            <input type="text" class="form-control" id="predicted-answer" name="predicted-answer" disabled>
 
         </div>
         <div class="col">
@@ -262,6 +264,21 @@
         scatterPlot = Chart.Scatter(ctx, {
             data: scatterChartData,
             options: {
+                scales: {
+                    // prevent labels from clipping
+                    xAxes: [{
+                             afterDataLimits: function(axis) {
+                                axis.min -= 1; // add 1px to top
+                                axis.max += 3; // add 1px to top
+                             }
+                          }],
+                    yAxes: [{
+                             afterDataLimits: function(axis) {
+                                axis.min -= 1; // add 1px to top
+                                axis.max += 2; // add 1px to top
+                             }
+                          }]
+                },
                 tooltips: {
                     callbacks: {
                         label: function (tooltipItem, data) {
