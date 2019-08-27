@@ -30,6 +30,7 @@ def get_output():
     logger.info(data)
 
     input_sample = data["sample"]
+    model_name = data["model"]
 
     logger.info(input_sample)
 
@@ -46,7 +47,7 @@ def get_output():
               "context": context,
               "answer": answer_dict}
 
-    prediction, layers, token_indices = generate_model_output(sample)
+    prediction, layers, token_indices = generate_model_output(sample, model_name)
 
     output = {
         'hidden_states': layers,
@@ -57,8 +58,9 @@ def get_output():
     return jsonify(output)
 
 
-def generate_model_output(sample):
-    prediction, hidden_states, features = model.tokenize_and_predict(sample)
+def generate_model_output(sample, model_name):
+
+    prediction, hidden_states, features = model.tokenize_and_predict(sample, model_name)
 
     # build pca-layer list from hidden states
     tokens = features.tokens
@@ -108,7 +110,7 @@ def run():
     # parser.add_argument("model_dir", help="directory where model files are stored")
     # args = parser.parse_args()
 
-    logger.debug("Init BERT SQuAD model")
+    logger.debug("Init BERT models")
     model.init()
 
     logger.debug("Run app")

@@ -1,3 +1,121 @@
+.title {
+    text-align: center;
+    padding-top: 20pt;
+    padding-bottom: 20pt;
+}
+
+.intro-text {
+    color: #666;
+    font-size: 10pt;
+    margin-left: 80pt;
+    margin-right: 60pt;
+}
+
+.info-text {
+    color: #666;
+    font-size: 10pt;
+}
+
+input[type=text] {
+    height: 25px;
+    font-size: 10pt;
+    margin-bottom: 5pt;
+}
+
+.form-label {
+    font-size: 9pt;
+    font-weight: bold;
+    margin: 0;
+    float: left;
+}
+
+.layer-label {
+    font-size: 9pt;
+    font-weight: bold;
+    margin-top: 10pt;
+}
+
+.layer-label-large {
+    font-size: 12pt;
+    font-weight: bold;
+}
+
+.task-tab-wrapper {
+    background-color: #efefef;
+    margin-left: 80pt;
+    margin-right: 60pt;
+    text-align: center;
+    font-size: 11pt;
+}
+
+.task-tab {
+    border-top: None;
+    border-left: None;
+    border-right: None;
+    border-bottom: solid #ccc 1px;
+    cursor: pointer;
+}
+
+.task-tab-active {
+    border-top: solid #ccc 1px;
+    border-left: solid #ccc 1px;
+    border-right: solid #ccc 1px;
+    border-bottom: None;
+}
+
+.task-tab-deactived {
+    color: #666;
+    cursor: default;
+}
+
+.question-form-container {
+    padding: 10pt  10pt 20pt 20pt;
+    background-color: #efefef;
+    margin-left: 80pt;
+    margin-right: 60pt;
+    margin-bottom: 10pt;
+    border-left: solid #ccc 1px;
+    border-right: solid #ccc 1px;
+    border-bottom: solid #ccc 1px;
+}
+
+.form-textarea {
+    font-size: 10pt;
+    margin-bottom: 5pt;
+}
+
+.form-button {
+    margin-top: 10pt;
+}
+
+.canvas-container {
+    margin-left: 75pt;
+    margin-right: 55pt;
+    margin-bottom: 50pt;
+}
+
+.slider-container {
+    width: 100%;
+    padding: 20pt 60pt 20pt 80pt;
+}
+
+.id-switcher-input {
+    margin-top: 11pt;
+    width: 150pt;
+    color: #495057;
+    margin-left: -3pt;
+    margin-right: -3pt;
+}
+
+.id-switcher-label {
+    font-size: 10pt;
+    font-weight: bold;
+    margin-left: 2pt;
+    margin-right: 2pt;
+    cursor: pointer;
+    color: #212529;
+}
+
 input[type=range] {
     -webkit-appearance: none;
     width: 100%;
@@ -100,103 +218,4 @@ canvas {
     -moz-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none;
-}
-
-.title {
-    text-align: center;
-    padding-top: 20pt;
-    padding-bottom: 20pt;
-}
-
-.intro-text {
-    color: #666;
-    font-size: 10pt;
-    margin-left: 80pt;
-    margin-right: 60pt;
-}
-
-input[type=text] {
-    height: 25px;
-    font-size: 10pt;
-    margin-bottom: 5pt;
-}
-
-.form-label {
-    font-size: 9pt;
-    font-weight: bold;
-    margin: 0px;
-    float: left;
-}
-
-.layer-label {
-    font-size: 11pt;
-}
-
-.task-tab-wrapper {
-    background-color: #efefef;
-    margin-left: 80pt;
-    margin-right: 60pt;
-    text-align: center;
-    font-size: 11pt;
-}
-
-.task-tab-active {
-    border-top: solid #ccc 1px;
-    border-left: solid #ccc 1px;
-    border-right: solid #ccc 1px;
-}
-
-.task-tab {
-    border-top: None;
-    border-left: None;
-    border-right: None;
-    border-bottom: solid #ccc 1px;
-}
-
-.question-form-container {
-    padding: 10pt  10pt 20pt 20pt;
-    background-color: #efefef;
-    margin-left: 80pt;
-    margin-right: 60pt;
-    margin-bottom: 10pt;
-    border-left: solid #ccc 1px;
-    border-right: solid #ccc 1px;
-    border-bottom: solid #ccc 1px;
-}
-
-.form-textarea {
-    font-size: 10pt;
-    margin-bottom: 5pt;
-}
-
-.form-button {
-    margin-top: 10pt;
-}
-
-.canvas-container {
-    padding-left: 50pt;
-    padding-right: 50pt;
-    padding-bottom: 50pt;
-}
-
-.slider-container {
-    width: 100%;
-    padding-left: 80pt;
-    padding-right: 60pt;
-    padding-bottom: 40pt;
-}
-
-.id-switcher-input {
-    margin-top: 11pt;
-    width: 150pt;
-    color: #495057;
-}
-
-.id-switcher-label {
-    font-size: 9pt;
-    font-weight: bold;
-    margin-left: 5pt;
-    margin-right: 5pt;
-    cursor: pointer;
-    color: #212529;
 }

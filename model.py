@@ -9,19 +9,23 @@ FORMAT = '%(asctime)-15s %(message)s'
 logging.basicConfig(format=FORMAT, level=os.environ.get("LOGLEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
-model_path = "/Users/betty/Projekte/Datexis/QA/baselines/bert/models/squad/pytorch_model.bin"
-model = None
-tokenizer = None
+squad_model_path = "/Users/betty/Projekte/Datexis/QA/baselines/bert/models/squad/pytorch_model.bin"
+hotpot_model_path = "/Users/betty/Projekte/Datexis/QA/baselines/bert/models/hotpot/small_distract/pytorch_model.bin"
+squad_model = None
+hotpot_model = None
+babi_model = None
+base_tokenizer = None
+large_tokenizer = None
 
 
-def load_model(model_file):
+def load_model(model_file, model_type):
     start_time = current_milli_time()
 
     # Load a pretrained model that has been fine-tuned
-    config = BertConfig.from_pretrained('bert-base-uncased', output_hidden_states=True)
+    config = BertConfig.from_pretrained(model_type, output_hidden_states=True)
 
     pretrained_weights = torch.load(model_file, map_location=torch.device('cpu'))
-    model = BertForQuestionAnswering.from_pretrained('bert-base-uncased',
+    model = BertForQuestionAnswering.from_pretrained(model_type,
                                                      state_dict=pretrained_weights,
                                                      config=config)
 
@@ -44,7 +48,17 @@ def parse_model_output(output, example, features):
     return nbest_predictions[0], output[2]  # top prediction, hidden states
 
 
-def tokenize_and_predict(sample):
+def tokenize_and_predict(sample, model_name):
+
+    if model_name == "squad":
+        model = squad_model
+        tokenizer = base_tokenizer
+    elif model_name == "hotpot":
+        model = hotpot_model
+        tokenizer = large_tokenizer
+    else:
+        raise Exception
+
     example = read_squad_example(sample)
 
     input_features = tokenize(example, tokenizer)
@@ -80,9 +94,6 @@ def tokenize(example, tokenizer):
                                            max_query_length=64,
                                            is_training=False)
 
-    print(features.start_position)
-    print(features.end_position)
-
     features.input_ids = torch.tensor([features.input_ids], dtype=torch.long)
     features.input_mask = torch.tensor([features.input_mask], dtype=torch.long)
     features.segment_ids = torch.tensor([features.segment_ids], dtype=torch.long)
@@ -93,7 +104,13 @@ def tokenize(example, tokenizer):
 
 
 def init():
-    global model
-    global tokenizer
-    model = load_model(model_path)
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+    global squad_model
+    global hotpot_model
+    global base_tokenizer
+    global large_tokenizer
+
+    squad_model = load_model(squad_model_path, 'bert-base-uncased')
+    base_tokenizer = BertTokenizer.from_pretrained('bert-large-uncased', do_lower_case=True)
+
+    hotpot_model = load_model(hotpot_model_path, 'bert-large-uncased')
+    large_tokenizer = BertTokenizer.from_pretrained('bert-large-uncased', do_lower_case=True)
