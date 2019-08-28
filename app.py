@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
 import waitress
 
 import model
@@ -21,6 +21,11 @@ app = Flask(__name__, static_url_path='/static')
 @app.route(base_route + "/")
 def index():
     return render_template("demo.html")
+
+
+@app.route(base_route + "/img/<path:filename>")
+def image(filename):
+    return send_file("./static/img/" + filename)
 
 
 @app.route(base_route + "/predict", methods=['POST'])
@@ -126,7 +131,6 @@ def run():
     model.init(args.model_dir)
 
     logger.debug("Run app")
-    # app.run(host='localhost', port=1337)
     waitress.serve(app.run("0.0.0.0", port=1337))
 
 
