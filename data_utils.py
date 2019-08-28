@@ -20,7 +20,8 @@ from __future__ import absolute_import, division, print_function
 import logging
 import math
 import collections
-
+import re
+from nltk import tokenize
 from pytorch_transformers.tokenization_bert import BasicTokenizer, whitespace_tokenize
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ class SquadExample(object):
                  qas_id,
                  question_text,
                  doc_tokens,
+                 sup_ids=None,
                  orig_answer_text=None,
                  start_position=None,
                  end_position=None,
@@ -43,6 +45,7 @@ class SquadExample(object):
         self.qas_id = qas_id
         self.question_text = question_text
         self.doc_tokens = doc_tokens
+        self.sup_ids = sup_ids
         self.orig_answer_text = orig_answer_text
         self.start_position = start_position
         self.end_position = end_position
@@ -57,6 +60,8 @@ class SquadExample(object):
         s += ", question_text: %s" % (
             self.question_text)
         s += ", doc_tokens: [%s]" % (" ".join(self.doc_tokens))
+        if self.sup_ids:
+            s += ", sup_ids: %d" % (self.sup_ids)
         if self.start_position:
             s += ", start_position: %d" % (self.start_position)
         if self.end_position:
@@ -82,6 +87,7 @@ class InputFeatures(object):
                  cls_index,
                  p_mask,
                  paragraph_len,
+                 sup_ids=None,
                  start_position=None,
                  end_position=None,
                  is_impossible=None):
@@ -97,6 +103,7 @@ class InputFeatures(object):
         self.cls_index = cls_index
         self.p_mask = p_mask
         self.paragraph_len = paragraph_len
+        self.sup_ids = sup_ids
         self.start_position = start_position
         self.end_position = end_position
         self.is_impossible = is_impossible
@@ -125,6 +132,8 @@ def read_squad_example(example):
 
     qas_id = example["id"]
     question_text = example["question"]
+    sup_ids = example["sup_ids"]
+    sup_token_pos_ids = []
 
     answer = example["answer"]
     orig_answer_text = answer["text"]
@@ -132,6 +141,13 @@ def read_squad_example(example):
     answer_length = len(orig_answer_text)
     start_position = char_to_word_offset[answer_offset]
     end_position = char_to_word_offset[answer_offset + answer_length - 1]
+
+    if sup_ids:
+        for sup in sup_ids:
+            sup_start_position = char_to_word_offset[sup[0]]
+            sup_end_position = char_to_word_offset[sup[1] - 1]
+            sup_token_pos_ids.append((sup_start_position, sup_end_position))
+
     # Only add answers where the text can be exactly recovered from the
     # document. If this CAN'T happen it's likely due to weird Unicode
     # stuff so we will just skip the example.
@@ -151,7 +167,8 @@ def read_squad_example(example):
         doc_tokens=doc_tokens,
         orig_answer_text=orig_answer_text,
         start_position=start_position,
-        end_position=end_position)
+        end_position=end_position,
+        sup_ids=sup_token_pos_ids)
 
 
 def convert_example_to_features(example, tokenizer, max_seq_length,
@@ -180,12 +197,7 @@ def convert_example_to_features(example, tokenizer, max_seq_length,
             tok_to_orig_index.append(i)
             all_doc_tokens.append(sub_token)
 
-    # tok_start_position = None
-    # tok_end_position = None
-    #
-    # tok_start_position = -1
-    # tok_end_position = -1
-
+    # Get token position for answer span
     tok_start_position = orig_to_tok_index[example.start_position]
     if example.end_position < len(example.doc_tokens) - 1:
         tok_end_position = orig_to_tok_index[example.end_position + 1] - 1
@@ -287,6 +299,8 @@ def convert_example_to_features(example, tokenizer, max_seq_length,
         span_is_impossible = example.is_impossible
         start_position = None
         end_position = None
+        sup_ids = []
+
         if not span_is_impossible:
             # For training, if our document chunk does not contain an annotation
             # we throw it out, since there is nothing to predict.
@@ -304,6 +318,13 @@ def convert_example_to_features(example, tokenizer, max_seq_length,
                 doc_offset = len(query_tokens) + 2
                 start_position = tok_start_position - doc_start + doc_offset
                 end_position = tok_end_position - doc_start + doc_offset
+
+                # Get token position for supporting fact spans
+                for sup in example.sup_ids:
+                    sup_tok_start_position = orig_to_tok_index[sup[0]] - doc_start + doc_offset
+                    sup_tok_end_position = orig_to_tok_index[sup[1]] - doc_start + doc_offset
+
+                    sup_ids.append((sup_tok_start_position, sup_tok_end_position))
 
         if span_is_impossible:
             start_position = cls_index
@@ -347,7 +368,44 @@ def convert_example_to_features(example, tokenizer, max_seq_length,
             paragraph_len=paragraph_len,
             start_position=start_position,
             end_position=end_position,
+            sup_ids=sup_ids,
             is_impossible=span_is_impossible)
+
+
+def split_into_sentences(text):
+    alphabets = "([A-Za-z])".lower()
+    prefixes = "(Mr|St|Mrs|Ms|Dr)[.]".lower()
+    suffixes = "(Inc|Ltd|Jr|Sr|Co)".lower()
+    starters = "(Mr|Mrs|Ms|Dr|He\s|She\s|It\s|They\s|Their\s|Our\s|We\s|But\s|However\s|That\s|This\s|Wherever)".lower()
+    acronyms = "([A-Z][.][A-Z][.](?:[A-Z][.])?)"
+    websites = "[.](com|net|org|io|gov|de|es|fr)"
+
+    text = " " + text + "  "
+    text = text.replace("\n", " ")
+    text = re.sub(prefixes, "\\1<prd>", text)
+    text = re.sub(websites, "<prd>\\1", text)
+    if "ph.d" in text.lower(): text = text.replace("Ph.D.", "Ph<prd>D<prd>")
+    if "u.s." in text.lower(): text = text.replace("U.S.", "U<prd>S<prd>")
+    text = re.sub("\s" + alphabets + "[.] ", " \\1<prd> ", text)
+    text = re.sub(acronyms + " " + starters, "\\1<stop> \\2", text)
+    text = re.sub(alphabets + "[.]" + alphabets + "[.]" + alphabets + "[.]", "\\1<prd>\\2<prd>\\3<prd>", text)
+    text = re.sub(alphabets + "[.]" + alphabets + "[.]", "\\1<prd>\\2<prd>", text)
+    text = re.sub(" " + suffixes + "[.] " + starters, " \\1<stop> \\2", text)
+    text = re.sub(" " + suffixes + "[.]", " \\1<prd>", text)
+    text = re.sub(" " + alphabets + "[.]", " \\1<prd>", text)
+    if "”" in text: text = text.replace(".”", "”.")
+    if "\"" in text: text = text.replace(".\"", "\".")
+    if "!" in text: text = text.replace("!\"", "\"!")
+    if "?" in text: text = text.replace("?\"", "\"?")
+    text = text.replace(".", ".<stop>")
+    text = text.replace("?", "?<stop>")
+    text = text.replace("!", "!<stop>")
+    text = text.replace(";", ";<stop>")
+    text = text.replace("<prd>", ".")
+    sentences = text.split("<stop>")
+    sentences = sentences[:-1]
+    sentences = [s.strip() for s in sentences]
+    return sentences
 
 
 def _improve_answer_span(doc_tokens, input_start, input_end, tokenizer,
@@ -679,6 +737,16 @@ def _compute_softmax(scores):
     for score in exp_scores:
         probs.append(score / total_sum)
     return probs
+
+
+def find_sup_char_ids(context, answer_start):
+    ctx_sentences = tokenize.sent_tokenize(context)
+    char_count = 0
+    for sentence in ctx_sentences:
+        start_id = context.lower().find(sentence.lower())
+        char_count += len(sentence)
+        if char_count > answer_start:
+            return [start_id, char_count]
 
 
 def get_question_indices(tokens):

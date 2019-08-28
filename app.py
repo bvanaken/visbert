@@ -6,7 +6,7 @@ import visualize
 import logging
 import os
 from utils import decode_text
-from utils_squad import get_question_indices, get_answer_indices
+from data_utils import get_question_indices, get_answer_indices, find_sup_char_ids
 import argparse
 
 FORMAT = '%(asctime)-15s %(message)s'
@@ -27,25 +27,31 @@ def index():
 def get_output():
     data = request.get_json()
 
-    logger.info(data)
-
     input_sample = data["sample"]
     model_name = data["model"]
-
-    logger.info(input_sample)
+    sup_ids = input_sample["sup_ids"] if "sup_ids" in input_sample else None
 
     answer_text = decode_text(input_sample["answer"])
     context = decode_text(input_sample["context"])
 
+    answer_start = context.lower().find(answer_text.lower())
+
     answer_dict = {
         "text": answer_text,
-        "answer_start": context.find(answer_text)
+        "answer_start": answer_start
     }
+
+    print(sup_ids)
+
+    if not sup_ids:
+        if answer_start != -1 and answer_text != "":
+            sup_ids = [find_sup_char_ids(context, answer_start)]
 
     sample = {"id": decode_text(input_sample["id"]),
               "question": decode_text(input_sample["question"]),
               "context": context,
-              "answer": answer_dict}
+              "answer": answer_dict,
+              "sup_ids": sup_ids}
 
     prediction, layers, token_indices = generate_model_output(sample, model_name)
 
@@ -59,7 +65,6 @@ def get_output():
 
 
 def generate_model_output(sample, model_name):
-
     prediction, hidden_states, features = model.tokenize_and_predict(sample, model_name)
 
     # build pca-layer list from hidden states
@@ -99,23 +104,30 @@ def generate_model_output(sample, model_name):
         'answer': {
             'start': answer_indices[0],
             'end': answer_indices[1],
-        }
+        },
+        'sups': [
+        ]
     }
+
+    for sup in features.sup_ids:
+        print(tokens[sup[0]:sup[1] + 1])
+
+        token_indices['sups'].append({'start': sup[0], 'end': sup[1]})
 
     return prediction, layers, token_indices
 
 
 def run():
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("model_dir", help="directory where model files are stored")
-    # args = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("model_dir", help="directory where model files are stored")
+    args = parser.parse_args()
 
     logger.debug("Init BERT models")
-    model.init()
+    model.init(args.model_dir)
 
     logger.debug("Run app")
-    app.run(host='localhost', port=1337)
-    # waitress.serve(app.run("0.0.0.0", port=1337))
+    # app.run(host='localhost', port=1337)
+    waitress.serve(app.run("0.0.0.0", port=1337))
 
 
 if __name__ == '__main__':

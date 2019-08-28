@@ -1,5 +1,5 @@
 from pytorch_transformers import BertForQuestionAnswering, BertTokenizer, BertConfig
-from utils_squad import (read_squad_example, convert_example_to_features, parse_prediction, RawResult)
+from data_utils import (read_squad_example, convert_example_to_features, parse_prediction, RawResult)
 import torch
 from utils import current_milli_time
 import logging
@@ -9,8 +9,6 @@ FORMAT = '%(asctime)-15s %(message)s'
 logging.basicConfig(format=FORMAT, level=os.environ.get("LOGLEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
-squad_model_path = "/Users/betty/Projekte/Datexis/QA/baselines/bert/models/squad/pytorch_model.bin"
-hotpot_model_path = "/Users/betty/Projekte/Datexis/QA/baselines/bert/models/hotpot/small_distract/pytorch_model.bin"
 squad_model = None
 hotpot_model = None
 babi_model = None
@@ -103,14 +101,18 @@ def tokenize(example, tokenizer):
     return features
 
 
-def init():
+def init(model_dir):
     global squad_model
     global hotpot_model
     global base_tokenizer
     global large_tokenizer
 
-    squad_model = load_model(squad_model_path, 'bert-base-uncased')
-    base_tokenizer = BertTokenizer.from_pretrained('bert-large-uncased', do_lower_case=True)
+    squad_model_file = os.path.join(model_dir, "squad.bin")
+    hotpot_model_file = os.path.join(model_dir, "hotpot_distract.bin")
+    cache_dir = os.path.join(model_dir, "tmp")
 
-    hotpot_model = load_model(hotpot_model_path, 'bert-large-uncased')
-    large_tokenizer = BertTokenizer.from_pretrained('bert-large-uncased', do_lower_case=True)
+    squad_model = load_model(squad_model_file, 'bert-base-uncased')
+    base_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', cache_dir=cache_dir, do_lower_case=True)
+
+    hotpot_model = load_model(hotpot_model_file, 'bert-large-uncased')
+    large_tokenizer = BertTokenizer.from_pretrained('bert-large-uncased', cache_dir=cache_dir, do_lower_case=True)

@@ -3,27 +3,61 @@
 
 <head>
     <meta charset="utf-8">
+    <!-- Search Engine -->
+    <meta name="description" content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
+    <!-- Schema.org for Google -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <meta itemprop="name" content="How Does BERT Answer Questions?">
+    <meta itemprop="description" content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines."><meta name="author" content="Betty van Aken">
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="How Does BERT Answer Questions?">
+    <meta name="twitter:description" content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
+    <meta name="twitter:site" content="@betty_v_a">
+    <meta name="twitter:creator" content="@betty_v_a">
+    <meta name="twitter:image:src" content="https://apps.datexis.com/visbert/img/preview">
+    <!-- Open Graph general (Facebook, Pinterest & Google+) -->
+    <meta name="og:title" content="How Does BERT Answer Questions?">
+    <meta name="og:description" content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
+    <meta name="og:image" content="https://apps.datexis.com/visbert/img/preview">
+    <meta name="og:url" content="https://apps.datexis.com/visbert">
+    <meta name="og:site_name" content="How Does BERT Answer Questions?">
+    <meta name="og:locale" content="en_US">
+    <meta name="og:type" content="website">
 
-    <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" href="http://nitinhayaran.github.io/jRange/jquery.range.css">
+    <link href='http://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="../static/style.css">
+    <link rel="shortcut icon" href="https://prof.beuth-hochschule.de/fileadmin/Resources/images/favicon.ico" type="image/x-icon">
 
     <title>How Does BERT Answer Questions?</title>
 
 </head>
 
 <body>
-<div><h2 class="title">How Does BERT Answer Questions?</h2></div>
-<p class="intro-text">Observe how BERT fine-tuned on QA tasks get to the right answers. This demo shows how the token
-    representations change throughout the layers of BERT. It demonstrates the findings from our paper: <i>Betty van
-        Aken, Benjamin Winter, Alexander Löser and Felix Gers.
-        <a href="https://openreview.net/pdf?id=SygMXE2vAE" target="_blank">How Does BERT Answer Questions? A Layer-Wise
-            Analysis of Transformer Representations.</a> CIKM 2019.</i></p>
+<h2 class="title">How Does BERT Answer Questions?</h2>
+
+<div class="d-flex intro-text-container">
+    <div class="flex-fill intro-text intro-text-left">Watch how BERT
+        (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token
+        representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines. <br><br>The tool demonstrates the findings from our paper: <i>Betty van
+            Aken, Benjamin Winter, Alexander Löser and Felix Gers.
+            <a href="https://openreview.net/pdf?id=SygMXE2vAE" target="_blank">How Does BERT Answer Questions? A
+                Layer-Wise
+                Analysis of Transformer Representations.</a> CIKM 2019.</i>
+    </div>
+    <div class="flex-fill intro-text intro-text-right">
+        The 4 phases of BERT's transformations:<br>
+        <div class="phases-text"><b>1. Topical / Word Clusters</b> Equal words and topics are clustered without current concern
+        consideration.</div>
+        <div class="phases-text"><b>2. Connect Entities with Mentions and Attributes</b> Tokens are clustered based on their relation in the
+            context.<br></div>
+        <div class="phases-text"><b>3. Match Question with Supporting Facts</b> Relevant context parts can be found close to question tokens.</div>
+        <div class="phases-text"><b>4. Answer Extraction</b> The answer tokens are separated from the rest. Semantic clusters are dissolved.</div>
+    </div>
+</div>
 
 <div class="d-flex task-tab-wrapper">
     <div class="p-2 flex-fill task-tab task-tab-active" id="squadTab" onclick="switchToSquad()">SQuAD</div>
@@ -31,26 +65,39 @@
     <div class="p-2 flex-fill task-tab task-tab-deactived" id="babiTab">bAbI QA</div>
 </div>
 <div class="question-form-container" align="center">
+
     <div class="row">
         <div class="col" align="left">
 
-            <span class="form-label">Testset ID </span><span class="id-switcher-label" onclick="switchIdLeft()"><</span>
-            <input type="text" id="id-input" name="id-input" class="id-switcher-input">
-            <span class="id-switcher-label" onclick="switchIdRight()">></span><br>
+            <label class="form-label form-label-inside" for="id-input">Testset ID</label>
 
+            <div style="margin-bottom:-12pt;"></div>
+
+            <span class=".no-wrap-text">
+                <span class="id-switcher-label" onclick="switchIdLeft()"><</span>
+                <input type="text" id="id-input" name="id-input" class="id-switcher-input">
+                <span class="id-switcher-label" onclick="switchIdRight()">></span>
+            </span>
+            <span class=".no-wrap-text" style="margin-left: 20pt;">
+                <input type="checkbox" id="own-example-check" name="own-example-check">
+                <label class="form-label form-label-inside" for="own-example-check">Enter own example</label>
+            </span>
+
+            <br>
             <label class="control-label form-label" for="question-textarea">Question</label>
             <textarea class="form-control form-textarea" id="question-textarea" name="question-textarea"
-                      rows="2"></textarea>
+                      rows="2" placeholder="Enter own question"></textarea>
             <label class="control-label form-label" for="ground-truth-answer">Ground Truth Answer</label>
-            <input type="text" class="form-control" id="ground-truth-answer" name="ground-truth-answer">
+            <input type="text" class="form-control" id="ground-truth-answer" name="ground-truth-answer"
+                   placeholder="Enter correct answer (optional)">
             <label class="control-label form-label" for="predicted-answer">Predicted Answer</label>
             <input type="text" class="form-control" id="predicted-answer" name="predicted-answer" disabled>
 
         </div>
         <div class="col">
-            <label class="control-label form-label" for="context-textarea">Context</label>
+            <label class="control-label form-label" for="context-textarea" style="margin-top: 5pt;">Context</label>
             <textarea class="form-control form-textarea" id="context-textarea" name="context-textarea"
-                      rows="7"></textarea>
+                      rows="7" placeholder="Enter context (must contain the answer)"></textarea>
             <button class="form-button btn btn-info btn-block" onclick="requestPredictionAndVis()">Predict & Visualize
             </button>
         </div>
@@ -58,14 +105,15 @@
 </div>
 </div>
 
-<div class="slider-container">
+<div class="slider-container" align="center">
     <div class="d-flex">
         <div class="flex-fill layer-label" align="left">0</div>
         <div class="flex-fill layer-label-large" align="center" id="layer_nr_label">Layer 0</div>
         <div class="flex-fill layer-label" align="right" id="layer_max">12</div>
     </div>
     <!--<span class="form-label layer-label" id="layer_nr_label">Layer 0</span>-->
-    <input type="range" id="layer_nr_slider" min="0" max="12" step="1" value="0"/>
+    <input type="range" id="layer-nr-slider" min="0" max="12" step="1" value="0"/>
+    <span id="phase-label" class="info-text">Phase 1: Topical / Word Clusters</span>
 </div>
 </div>
 
@@ -80,383 +128,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.6.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@0.7.3"></script>
+<script src="../static/main.js"></script>
 
-<script>
-
-    var color = Chart.helpers.color;
-
-    var fontDefault = {
-        size: 12,
-        weight: 'normal'
-    };
-    var fontBold = {
-        weight: 'bold'
-    };
-    var fontHighlighted = {
-        size: 14,
-        weight: 'bold'
-    };
-
-    var scatterChartData = {
-        datasets: [{
-            pointBackgroundColor: [],
-            pointBorderColor: [],
-            data: [],
-            datalabels: {
-                font: function (context) {
-                    var ind = context.dataIndex;
-
-                    // highlight when token belongs to answer or question
-                    if ("token_indices" in tokenInfo) {
-                        if (isIn(ind, [tokenInfo.token_indices.answer.start, tokenInfo.token_indices.answer.end])) {
-                            return fontHighlighted;
-                        }
-                        if (isIn(ind, [tokenInfo.token_indices.question.start, tokenInfo.token_indices.question.end])) {
-                            return fontBold;
-                        }
-                    }
-
-                    return fontDefault;
-                }
-            }
-        }]
-    };
-
-    var layer_nr = 0;
-    var hiddenStates = [];
-    var scatterPlot;
-    var tokenInfo = {};
-    var currentDataset = 'squad';
-
-    var datasets = {
-        squad: {
-            file: "../static/squad_examples.json",
-            samples: null,
-            currentIndex: 0,
-            layer_nr: 12
-        },
-        hotpot: {
-            file: "../static/hotpot_examples.json",
-            samples: null,
-            currentIndex: 0,
-            layer_nr: 24
-        }
-    };
-
-
-    function isIn(ind, range) {
-        return ind >= range[0] && ind < range[1]
-    }
-
-    function findMinMax(data) {
-        var minX = 1000000000;
-        var maxX = -1000000000;
-        var minY = 1000000000;
-        var maxY = -1000000000;
-
-        for (let i = 0; i < data.length; i++) {
-            var point = data[i];
-            if (point.x < minX) {
-                minX = point.x
-            }
-            if (point.x > maxX) {
-                maxX = point.x
-            }
-            if (point.y < minY) {
-                minY = point.y
-            }
-            if (point.y > maxY) {
-                maxY = point.y
-            }
-        }
-        return [minX, maxX, minY, maxY]
-    }
-
-    function adjustSlider(nr_layers){
-        $("#layer_nr_slider").attr("max", nr_layers);
-        $("#layer_max").text(nr_layers);
-    }
-
-    function refreshData(newData, scatterPlot) {
-        adjustSlider(datasets[currentDataset].layer_nr);
-
-        scatterChartData.datasets[0].data = newData;
-
-        var minMaxPoints = findMinMax(newData);
-
-        // add padding to avoid clipping labels
-        minMaxPoints[0] -= 1;
-        minMaxPoints[1] += 3;
-        minMaxPoints[2] -= 1;
-        minMaxPoints[3] += 2;
-
-        updateZoomAndPan(minMaxPoints[0], minMaxPoints[1], minMaxPoints[2], minMaxPoints[3]);
-
-        if (tokenInfo !== {}) {
-            formatPoints();
-        }
-
-        scatterPlot.update();
-    }
-
-    function updateZoomAndPan(minX, maxX, minY, maxY){
-        var xAxis = scatterPlot.options.scales.xAxes[0];
-        var yAxis = scatterPlot.options.scales.yAxes[0];
-
-        xAxis.ticks.min = minX;
-        xAxis.ticks.max = maxX;
-        yAxis.ticks.min = minY;
-        yAxis.ticks.max = maxY;
-
-        scatterPlot.options.pan.rangeMin = { x: minX, y: minY};
-        scatterPlot.options.pan.rangeMax = { x: maxX, y: maxY};
-
-        scatterPlot.options.zoom.rangeMin = { x: minX, y: minY};
-        scatterPlot.options.zoom.rangeMax = { x: maxX, y: maxY};
-    }
-
-    function insertSample(sample) {
-        $('#id-input').val(sample.id);
-        $('#question-textarea').val(sample.question);
-        $('#ground-truth-answer').val(sample.answer);
-        $('#predicted-answer').val("");
-        $('#context-textarea').val(sample.context);
-    }
-
-    function parseText(component) {
-
-        function trim(s) {
-            return (s || '').replace(/^\s+|\s+$/g, '');
-        }
-
-        var text = component.val();
-        text = encodeURIComponent(text);
-
-        // Remove linebreaks from input
-        text = text.replace(/\n/g, " ");
-
-        // Remove quotes from input
-        text = text.replace(/\"/g, "'");
-
-        text = trim(text);
-
-        return text;
-    }
-
-    function formatPoints() {
-
-        for (let i = 0; i < scatterChartData.datasets[0].data.length; i++) {
-
-            if (isIn(i, [tokenInfo.token_indices.question.start, tokenInfo.token_indices.question.end])) {
-
-                scatterChartData.datasets[0].pointBackgroundColor[i] = color('blue').alpha(1).rgbString();
-                scatterChartData.datasets[0].pointBorderColor[i] = 'blue';
-            }
-            else if (isIn(i, [tokenInfo.token_indices.answer.start, tokenInfo.token_indices.answer.end])) {
-
-                scatterChartData.datasets[0].pointBackgroundColor[i] = color('purple').alpha(1).rgbString();
-                scatterChartData.datasets[0].pointBorderColor[i] = 'purple';
-            }
-            else {
-                scatterChartData.datasets[0].pointBackgroundColor[i] = color('red').alpha(0.2).rgbString();
-                scatterChartData.datasets[0].pointBorderColor[i] = 'red';
-            }
-        }
-    }
-
-
-    function processResult(data) {
-        var predictedAnswer = data.prediction.text;
-
-        $('#predicted-answer').val(predictedAnswer);
-
-        hiddenStates = data.hidden_states;
-        tokenInfo["token_indices"] = data.token_indices;
-
-        refreshData(hiddenStates[layer_nr], scatterPlot);
-    }
-
-    function requestPredictionAndVis() {
-
-        var sample = {};
-
-        sample.id = parseText($('#id-input'));
-        sample.question = parseText($('#question-textarea'));
-        sample.context = parseText($('#context-textarea'));
-        sample.answer = parseText($('#ground-truth-answer'));
-
-        var data = {};
-        data.sample = sample;
-        data.model = currentDataset;
-
-        $.ajax({
-            url: '/visbert/predict',
-            type: 'post',
-            data: JSON.stringify(data),
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            dataType: 'json',
-            success: function (data) {
-                processResult(data);
-            }
-        });
-    }
-
-    function loadSamples() {
-        var dataset = datasets[currentDataset];
-
-        if(dataset.samples === null){
-            $.getJSON(dataset.file, function (json) {
-                dataset.samples = json;
-                dataset.currentIndex = Math.floor(Math.random() * dataset.samples.length);
-
-                insertSample(dataset.samples[dataset.currentIndex]);
-            });
-        } else {
-            insertSample(dataset.samples[dataset.currentIndex]);
-        }
-    }
-
-    function switchToHotpot(){
-        currentDataset = 'hotpot';
-        loadSamples();
-
-        $('#hotpotTab').addClass('task-tab-active');
-        $('#squadTab').removeClass('task-tab-active');
-        $('#babiTab').removeClass('task-tab-active');
-    }
-
-    function switchToSquad(){
-        currentDataset = 'squad';
-        loadSamples();
-
-        $('#squadTab').addClass('task-tab-active');
-        $('#hotpotTab').removeClass('task-tab-active');
-        $('#babiTab').removeClass('task-tab-active');
-    }
-
-    function switchIdLeft() {
-        var dataset = datasets[currentDataset];
-
-        if (dataset.currentIndex > 0) {
-            dataset.currentIndex = dataset.currentIndex - 1;
-            insertSample(dataset.samples[dataset.currentIndex]);
-        }
-    }
-
-    function switchIdRight() {
-        var dataset = datasets[currentDataset];
-
-        if (dataset.currentIndex < dataset.samples.length - 1) {
-            dataset.currentIndex = dataset.currentIndex + 1;
-            insertSample(dataset.samples[dataset.currentIndex]);
-        }
-    }
-
-    function refreshLayerNr(new_layer_nr) {
-        layer_nr = new_layer_nr;
-
-        $("#layer_nr_label").text("Layer " + layer_nr);
-    }
-
-    $(document).ready(function () {
-
-        $("#layer_nr_slider").val(0);
-        loadSamples('squad');
-
-        var ctx = $('#plot_canvas');
-        scatterPlot = Chart.Scatter(ctx, {
-            data: scatterChartData,
-            options: {
-                pan: {
-                    enabled: true,
-                    mode: "xy",
-                    speed: 0.01,
-                    // threshold: 10,
-                    rangeMin: {
-                        x: 0,
-                        y: 0
-                    },
-                    rangeMax: {
-                        x: 0,
-                        y: 0
-                    }
-                },
-                zoom: {
-                    enabled: true,
-                    drag: false,
-                    mode: "xy",
-                    speed: 0.02,
-                    rangeMin: {
-                        x: 0,
-                        y: 0
-                    },
-                    rangeMax: {
-                        x: 10,
-                        y: 10
-                    }
-                },
-                scales: {
-                    xAxes: [{
-                        ticks: {
-                            maxRotation: 0,
-                            precision: 0,
-                            min: 0,
-                            max:10,
-                            callback: function(value, index, values) {
-                                return Math.round(value);
-                            }
-                        }
-                    }],
-                    yAxes: [{
-                        ticks: {
-                            maxRotation: 0,
-                            precision: 0,
-                            min: 0,
-                            max:10,
-                            callback: function(value, index, values) {
-                                return Math.round(value);
-                            }
-                        }
-                    }]
-                },
-                tooltips: {
-                    callbacks: {
-                        label: function (tooltipItem, data) {
-                            return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].label;
-                        }
-                    }
-                },
-                plugins: {
-                    datalabels: {
-                        anchor: 'end',
-                        align: 'right',
-                        color: 'grey',
-                        offset: 8,
-                        padding: 0,
-                        clamp: true
-                    },
-                    legend: false,
-                    title: false
-                }
-            }
-        });
-
-        $("#layer_nr_slider").on("input change", function () {
-            var new_layer_nr = $(this).val();
-
-            if (new_layer_nr !== layer_nr) {
-                refreshLayerNr(new_layer_nr);
-
-                if (hiddenStates.length > layer_nr) {
-                    refreshData(hiddenStates[layer_nr], scatterPlot, null);
-                }
-            }
-        });
-
-    });
-</script>
 </body>
 
 </html>
