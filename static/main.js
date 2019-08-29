@@ -2,7 +2,8 @@
 
 var fontDefault = {
     size: 12,
-    weight: 'normal'
+    weight: 'normal',
+
 };
 var fontBold = {
     weight: 'bold'

@@ -1,0 +1,6 @@
+Flask==1.1.1
+pytorch-transformers==1.1.0
+torch==1.1.0
+waitress==1.3.0
+sklearn
+nltk

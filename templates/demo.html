@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" href="http://nitinhayaran.github.io/jRange/jquery.range.css">
-    <link href='http://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:100,300,400,500,700,900' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="../static/style.css">
     <link rel="shortcut icon" href="https://prof.beuth-hochschule.de/fileadmin/Resources/images/favicon.ico" type="image/x-icon">
 
@@ -37,19 +37,20 @@
 </head>
 
 <body>
-<h2 class="title">How Does BERT Answer Questions?</h2>
+<h2 class="title"><img src="../static/img/bert.png" style="margin-right: 10pt;width: 20pt;">How Does BERT Answer Questions?</h2>
 
 <div class="d-flex intro-text-container">
-    <div class="flex-fill intro-text intro-text-left">Watch how BERT
-        (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token
-        representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines. <br><br>The tool demonstrates the findings from our paper: <i>Betty van
+    <div class="flex-fill intro-text intro-text-left">
+        <div class="intro-title">What is this about?</div>
+        Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token
+        representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines. <br><br>The tool demonstrates the findings from our paper: <span style="font-weight: 500;">Betty van
             Aken, Benjamin Winter, Alexander Löser and Felix Gers.
             <a href="https://openreview.net/pdf?id=SygMXE2vAE" target="_blank">How Does BERT Answer Questions? A
                 Layer-Wise
-                Analysis of Transformer Representations.</a> CIKM 2019.</i>
+                Analysis of Transformer Representations.</a> CIKM 2019.</span>
     </div>
     <div class="flex-fill intro-text intro-text-right">
-        The 4 phases of BERT's transformations:<br>
+        <div class="intro-title">The 4 phases of BERT's transformations</div>
         <div class="phases-text"><b>1. Topical / Word Clusters</b> Equal words and topics are clustered without current concern
         consideration.</div>
         <div class="phases-text"><b>2. Connect Entities with Mentions and Attributes</b> Tokens are clustered based on their relation in the
@@ -60,9 +61,9 @@
 </div>
 
 <div class="d-flex task-tab-wrapper">
-    <div class="p-2 flex-fill task-tab task-tab-active" id="squadTab" onclick="switchToSquad()">SQuAD</div>
-    <div class="p-2 flex-fill task-tab" id="hotpotTab" onclick="switchToHotpot()">HotpotQA</div>
-    <div class="p-2 flex-fill task-tab task-tab-deactived" id="babiTab">bAbI QA</div>
+    <div class="p-2 flex-fill task-tab task-tab-active" id="squadTab" onclick="switchToSquad()">SQuAD <span class="footnote-id">[1]</span></div>
+    <div class="p-2 flex-fill task-tab" id="hotpotTab" onclick="switchToHotpot()">HotpotQA <span class="footnote-id">[2]</span></div>
+    <div class="p-2 flex-fill task-tab task-tab-deactived" id="babiTab">bAbI QA <span class="footnote-id">[3]</span></div>
 </div>
 <div class="question-form-container" align="center">
 
@@ -105,20 +106,29 @@
 </div>
 </div>
 
-<div class="slider-container" align="center">
-    <div class="d-flex">
+<div class="slider-container" align="left">
+    <div class="d-flex" style="width:50%">
         <div class="flex-fill layer-label" align="left">0</div>
         <div class="flex-fill layer-label-large" align="center" id="layer_nr_label">Layer 0</div>
         <div class="flex-fill layer-label" align="right" id="layer_max">12</div>
     </div>
     <!--<span class="form-label layer-label" id="layer_nr_label">Layer 0</span>-->
-    <input type="range" id="layer-nr-slider" min="0" max="12" step="1" value="0"/>
+    <input type="range" style="width:50%" id="layer-nr-slider" min="0" max="12" step="1" value="0"/><br>
     <span id="phase-label" class="info-text">Phase 1: Topical / Word Clusters</span>
 </div>
 </div>
 
 <div class="canvas-container">
     <canvas id="plot_canvas"></canvas>
+</div>
+<div class="footnotes">
+    <p><span class="footnote-id">[1]</span> Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Percy Liang. 2016. <i>SQuAD: 100, 000+ Questions for Machine Comprehension of Text.</i> In Proceedings of EMNLP 2016</p>
+    <p><span class="footnote-id">[2]</span> Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio, William W. Cohen, Ruslan Salakhutdinov, and Christopher D. Manning. 2018. <i>HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering.</i> In Proceedings of EMNLP 2018.</p>
+    <p><span class="footnote-id">[3]</span> Jason Weston, Antoine Bordes, Sumit Chopra, and Tomas Mikolov. 2016. <i>Towards AI-Complete Question Answering: A Set of Prerequisite Toy Tasks.</i> In Proceedings of ICLR 2016</p>
+    <br>
+    <br>
+    <p>by <a href="https://prof.beuth-hochschule.de/loeser/people/betty-van-aken/" target="_blank">Betty van Aken</a> (<a href="https://twitter.com/betty_v_a" target="_blank">@betty_v_a</a>)</p>
+
 </div>
 
 

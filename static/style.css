@@ -1,11 +1,15 @@
 body {
-    font-family: Roboto, sans-serif;
+    font-family: "Open Sans", sans-serif;
+    /*font-family: "Roboto", sans-serif;*/
 }
 
 .title {
-    text-align: center;
+    text-align: left;
+    margin-left: 80pt;
     padding-top: 20pt;
-    padding-bottom: 20pt;
+    padding-bottom: 15pt;
+    color:#117281;
+    font-weight: 700;
 }
 
 .intro-text-container {
@@ -14,12 +18,35 @@ body {
 
 .intro-text {
     color: #666;
-    font-size: 10pt;
+    font-size: 9pt;
     font-weight: 300;
-    padding: 10pt;
+    padding-bottom: 10pt;
     width: 100%;
-    background-color: #eef7f8;
 }
+
+.intro-title {
+    font-weight: 700;
+    font-size: 11pt;
+    color:#117281;
+    margin-bottom: 5pt;
+}
+
+.footnote-id {
+    font-weight: 300;
+    font-size: 8pt;
+    color: #117281;
+    line-height: 20pt;
+    height: 20pt;
+}
+
+.footnotes {
+    width: 50%;
+    font-size: 9pt;
+    margin-left: 80pt;
+    margin-right: 60pt;
+}
+
+input, textarea, select { font-family:inherit; font-weight: 400; }
 
 .intro-text-left {
     margin-right:5pt;
@@ -34,11 +61,11 @@ body {
 }
 
 .phases-text {
-    padding-top: 5pt;
+    padding-bottom: 2pt;
 }
 
 .phases-text b {
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .info-text {
@@ -77,7 +104,7 @@ input[type=text] {
 }
 
 .task-tab-wrapper {
-    background-color: #dedede;
+    background-color: #f4f7f8;
     margin-left: 80pt;
     margin-right: 60pt;
     text-align: center;
@@ -108,13 +135,14 @@ input[type=text] {
 
 .question-form-container {
     padding: 10pt  10pt 20pt 20pt;
-    background-color: #dedede;
+    background-color: #f4f7f8;
     margin-left: 80pt;
     margin-right: 60pt;
     margin-bottom: 10pt;
     border-left: solid #ccc 1px;
     border-right: solid #ccc 1px;
     border-bottom: solid #ccc 1px;
+    box-shadow: 8px 8px 10px #88888833;
 }
 
 .form-textarea {
