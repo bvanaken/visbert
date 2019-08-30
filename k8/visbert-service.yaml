@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: visbert
+spec:
+  type: NodePort
+  ports:
+    - port: 1337
+      name: client-port
+      targetPort: 1337
+  selector:
+    app: visbert

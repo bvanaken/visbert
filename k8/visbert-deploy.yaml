@@ -1,0 +1,37 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: visbert
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: visbert
+    spec:
+      containers:
+        - name: visbert
+          image: registry.datexis.com/bvanaken/visbert:v1.0
+          command:
+            - /bin/sh
+            - "-c"
+            - "./start/container_start.sh"
+          imagePullPolicy: Always
+          ports:
+            - name: client-port
+              containerPort: 1337
+          resources:
+            requests:
+              memory: 40Gi
+              cpu: 2
+            limits:
+              memory: 40Gi
+          volumeMounts:
+            - name: visbert-models-pvc
+              mountPath: /models_dir
+      imagePullSecrets:
+        - name: private-registry-auth
+      volumes:
+        - name: visbert-models-pvc
+          persistentVolumeClaim:
+            claimName: visbert-models-pvc

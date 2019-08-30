@@ -16,16 +16,17 @@ base_tokenizer = None
 large_tokenizer = None
 
 
-def load_model(model_file, model_type):
+def load_model(model_file, model_type, cache_dir):
     start_time = current_milli_time()
 
     # Load a pretrained model that has been fine-tuned
-    config = BertConfig.from_pretrained(model_type, output_hidden_states=True)
+    config = BertConfig.from_pretrained(model_type, output_hidden_states=True, cache_dir=cache_dir)
 
     pretrained_weights = torch.load(model_file, map_location=torch.device('cpu'))
     model = BertForQuestionAnswering.from_pretrained(model_type,
                                                      state_dict=pretrained_weights,
-                                                     config=config)
+                                                     config=config,
+                                                     cache_dir=cache_dir)
 
     end_time = current_milli_time()
     logger.info("Model Loading Time: {} ms".format(end_time - start_time))
@@ -111,8 +112,8 @@ def init(model_dir):
     hotpot_model_file = os.path.join(model_dir, "hotpot_distract.bin")
     cache_dir = os.path.join(model_dir, "tmp")
 
-    squad_model = load_model(squad_model_file, 'bert-base-uncased')
+    squad_model = load_model(squad_model_file, 'bert-base-uncased', cache_dir=cache_dir)
     base_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', cache_dir=cache_dir, do_lower_case=True)
 
-    hotpot_model = load_model(hotpot_model_file, 'bert-large-uncased')
+    hotpot_model = load_model(hotpot_model_file, 'bert-large-uncased', cache_dir=cache_dir)
     large_tokenizer = BertTokenizer.from_pretrained('bert-large-uncased', cache_dir=cache_dir, do_lower_case=True)
