@@ -282,9 +282,13 @@ function processResult(data) {
     refreshLayerNr(currentLayer);
     adjustSlider(tasks[currentTask].layer_nr);
     refreshData(hiddenStates[currentLayer], scatterPlot);
+
+    $('#button-spinner').hide();
 }
 
 function requestPredictionAndVis() {
+
+    $('#button-spinner').show();
 
     var sample = {};
 
@@ -478,5 +482,7 @@ $(document).ready(function () {
     $("#own-example-check").change(function () {
         toggleOwnExample();
     });
+
+    $("#button-spinner").hide();
 
 });

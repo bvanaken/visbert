@@ -25,9 +25,9 @@
     <meta name="og:locale" content="en_US">
     <meta name="og:type" content="website">
 
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <link rel="stylesheet" href="http://nitinhayaran.github.io/jRange/jquery.range.css">
+    <link rel="stylesheet" href="../static/libs/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/libs/font-awesome.min.css">
+    <!--<link rel="stylesheet" href="http://nitinhayaran.github.io/jRange/jquery.range.css">-->
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:100,300,400,500,700,900' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="../static/style.css">
     <link rel="shortcut icon" href="https://prof.beuth-hochschule.de/fileadmin/Resources/images/favicon.ico" type="image/x-icon">
@@ -99,7 +99,7 @@
             <label class="control-label form-label" for="context-textarea" style="margin-top: 5pt;">Context</label>
             <textarea class="form-control form-textarea" id="context-textarea" name="context-textarea"
                       rows="7" placeholder="Enter context (must contain the answer)"></textarea>
-            <button class="form-button btn btn-info btn-block" onclick="requestPredictionAndVis()">Predict & Visualize
+            <button class="form-button btn btn-info btn-block" onclick="requestPredictionAndVis()">Predict & Visualize <i class="fa fa-spinner fa-spin" id="button-spinner"></i>
             </button>
         </div>
     </div>
@@ -127,17 +127,17 @@
     <p><span class="footnote-id">[3]</span> Jason Weston, Antoine Bordes, Sumit Chopra, and Tomas Mikolov. 2016. <i>Towards AI-Complete Question Answering: A Set of Prerequisite Toy Tasks.</i> In Proceedings of ICLR 2016</p>
     <br>
     <br>
-    <p>by <a href="https://prof.beuth-hochschule.de/loeser/people/betty-van-aken/" target="_blank">Betty van Aken</a> (<a href="https://twitter.com/betty_v_a" target="_blank">@betty_v_a</a>)</p>
+    <!--<p><b>by <a href="https://prof.beuth-hochschule.de/loeser/people/betty-van-aken/" target="_blank">Betty van Aken</a> (<a href="https://twitter.com/betty_v_a" target="_blank">@betty_v_a</a>) @ <a href="https://datexis.com" target="_blank">DATEXIS</a></b></p>-->
 
 </div>
 
 
 <!-- JQuery Import - Placed at the end of the document so the pages load faster -->
-<script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.6.0"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@0.7.3"></script>
+<script src="../static/libs/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+<script src="../static/libs/Chart.min.js"></script>
+<script src="../static/libs/chartjs-plugin-datalabels@0.6.0"></script>
+<script src="../static/libs/hammer.js"></script>
+<script src="../static/libs/chartjs-plugin-zoom@0.7.3"></script>
 <script src="../static/main.js"></script>
 
 </body>
