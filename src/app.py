@@ -23,9 +23,9 @@ def index():
     return render_template("demo.html")
 
 
-@app.route(base_route + "/img/<path:filename>")
+@app.route(base_route + "/static/<path:filename>")
 def image(filename):
-    return send_file("./static/img/" + filename)
+    return send_file("./static/" + filename)
 
 
 @app.route(base_route + "/predict", methods=['POST'])
