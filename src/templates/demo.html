@@ -19,12 +19,12 @@
           content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
     <meta name="twitter:site" content="@betty_v_a">
     <meta name="twitter:creator" content="@betty_v_a">
-    <meta name="twitter:image" content="https://apps.datexis.com/visbert/static/img/preview_small.png">
+    <meta name="twitter:image" content="https://apps.datexis.com/visbert/static/img/preview-og.png">
     <!-- Open Graph general (Facebook, Pinterest & Google+) -->
     <meta property="og:title" content="How Does BERT Answer Questions?">
     <meta property="og:description"
           content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
-    <meta property="og:image" content="https://apps.datexis.com/visbert/static/img/preview_small.png">
+    <meta property="og:image" content="https://apps.datexis.com/visbert/static/img/preview-og.png">
     <meta property="og:url" content="https://apps.datexis.com/visbert">
     <meta property="og:site_name" content="How Does BERT Answer Questions?">
     <meta property="og:locale" content="en_US">
@@ -32,7 +32,7 @@
 
     <link rel="stylesheet" href="./static/libs/bootstrap.min.css">
     <link rel="stylesheet" href="./static/libs/font-awesome.min.css">
-    <!--<link rel="stylesheet" href="http://nitinhayaran.github.io/jRange/jquery.range.css">-->
+
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:100,300,400,500,700,900' rel='stylesheet'
           type='text/css'>
     <link rel="stylesheet" href="./static/style.css">
@@ -44,7 +44,7 @@
 </head>
 
 <body>
-<h2 class="title"><img src="./static/img/bert.png" style="margin-right: 10pt;width: 20pt;">How Does BERT Answer
+<h2 class="title"><img src="./static/img/bert.png" class="bert-image">How Does BERT Answer
     Questions?</h2>
 
 <div class="d-flex intro-text-container">
@@ -100,7 +100,7 @@
                 <input type="text" id="id-input" name="id-input" class="id-switcher-input">
                 <span class="id-switcher-label" onclick="switchIdRight()">></span>
             </span>
-            <span class=".no-wrap-text" style="margin-left: 20pt;">
+            <span class=".no-wrap-text own-example-input">
                 <input type="checkbox" id="own-example-check" name="own-example-check">
                 <label class="form-label form-label-inside" for="own-example-check">Enter own example</label>
             </span>
@@ -129,15 +129,15 @@
 </div>
 
 <div class="slider-container" align="left">
-    <div class="d-flex" style="width:50%">
+    <div class="d-flex">
         <div class="flex-fill layer-label" align="left">0</div>
         <div class="flex-fill layer-label-large" align="center" id="layer_nr_label">Layer 0</div>
         <div class="flex-fill layer-label" align="right" id="layer_max">12</div>
     </div>
     <!--<span class="form-label layer-label" id="layer_nr_label">Layer 0</span>-->
-    <input type="range" style="width:50%" id="layer-nr-slider" min="0" max="12" step="1" value="0"/><br>
-    <span id="phase-label" class="info-text">Phase 1: Topical / Word Clusters</span>
+    <input type="range" id="layer-nr-slider" min="0" max="12" step="1" value="0"/><br>
 </div>
+    <div id="phase-label" class="phases-label">Phase 1: Topical / Word Clusters</div>
 </div>
 
 <div class="canvas-container">
@@ -159,7 +159,7 @@
 
 
 <!-- JQuery Import - Placed at the end of the document so the pages load faster -->
-<script src="./static/libs/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+<script src="./static/libs/jquery-3.4.1.min.js"></script>
 <script src="./static/libs/Chart.min.js"></script>
 <script src="./static/libs/chartjs-plugin-datalabels@0.6.0"></script>
 <script src="./static/libs/hammer.js"></script>

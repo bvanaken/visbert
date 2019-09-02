@@ -395,6 +395,9 @@ $(document).ready(function () {
     scatterPlot = Chart.Scatter(ctx, {
         data: scatterChartData,
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: 0.5,
             pan: {
                 enabled: true,
                 mode: "xy",

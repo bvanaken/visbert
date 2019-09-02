@@ -1,20 +1,24 @@
 body {
     font-family: "Open Sans", sans-serif;
     /*font-family: "Roboto", sans-serif;*/
+    margin-left: 80pt;
+    margin-right: 60pt;
 }
 
 .title {
     text-align: left;
-    margin-left: 80pt;
     padding-top: 20pt;
     padding-bottom: 15pt;
     color:#117281;
     font-weight: 700;
 }
 
+.bert-image {
+    margin-right: 10pt;
+    width: 20pt;
+}
+
 .intro-text-container {
-    margin-left: 80pt;
-    margin-right: 60pt;
     padding-bottom: 15pt;
 }
 
@@ -41,8 +45,6 @@ body {
 .footnotes {
     width: 50%;
     font-size: 9pt;
-    margin-left: 80pt;
-    margin-right: 60pt;
     font-weight: 300;
 }
 
@@ -68,11 +70,15 @@ input, textarea, select { font-family:inherit; font-weight: 400; }
     font-weight: 600;
 }
 
-.info-text {
+.phases-label {
     color: #666;
     font-size: 9pt;
-    margin: auto;
+    margin-bottom: 20pt;
     font-weight: 400;
+}
+
+.own-example-input {
+    margin-left: 10pt;
 }
 
 input[type=text] {
@@ -103,10 +109,15 @@ input[type=text] {
     font-weight: bold;
 }
 
+.slider-container {
+    width: 50%;
+    padding-top: 20pt;
+    padding-bottom: 5pt;
+    text-align: left;
+}
+
 .task-tab-wrapper {
     background-color: #f4f7f8;
-    margin-left: 80pt;
-    margin-right: 60pt;
     text-align: center;
     font-size: 11pt;
 }
@@ -136,8 +147,6 @@ input[type=text] {
 .question-form-container {
     padding: 10pt  10pt 20pt 20pt;
     background-color: #f4f7f8;
-    margin-left: 80pt;
-    margin-right: 60pt;
     margin-bottom: 10pt;
     border-left: solid #ccc 1px;
     border-right: solid #ccc 1px;
@@ -155,14 +164,9 @@ input[type=text] {
 }
 
 .canvas-container {
-    margin-left: 75pt;
-    margin-right: 55pt;
+    margin-left: -5pt;
+    margin-right: -5pt;
     margin-bottom: 50pt;
-}
-
-.slider-container {
-    width: 100%;
-    padding: 20pt 60pt 20pt 80pt;
 }
 
 .id-switcher-input {
@@ -292,4 +296,56 @@ canvas {
     -moz-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none;
+}
+
+@media (max-width: 1015px) {
+    .own-example-input {
+        margin-left: 0;
+        display: block;
+    }
+}
+
+@media (max-width: 715px) {
+    body {
+        margin-left: 15pt;
+        margin-right: 10pt;
+    }
+    .title {
+        text-align: center;
+    }
+    .slider-container {
+        text-align: center;
+    }
+    .phases-label {
+        font-size: 8pt;
+    }
+    .own-example-input {
+        margin-left: 0;
+        display: block;
+    }
+    .footnotes {
+        width: 100%;
+    }
+    .id-switcher-input {
+        width: 60pt;
+    }
+    .id-switcher-label {
+        font-size: 8pt;
+    }
+    input[type=text] {
+        font-size: 8pt;
+    }
+    .form-textarea {
+        font-size: 8pt;
+    }
+    .form-label {
+        font-size: 8pt;
+    }
+    .slider-container {
+        width: 100%;
+    }
+    .canvas-container {
+        margin-left: 5pt;
+        margin-right: 5pt;
+    }
 }
