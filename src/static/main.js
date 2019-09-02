@@ -1,4 +1,8 @@
- var color = Chart.helpers.color;
+
+var squadExampleFile = "./static/squad_examples.json";
+var hotpotExampleFile = "./static/hotpot_examples.json";
+
+var color = Chart.helpers.color;
 
 var fontDefault = {
     size: 12,
@@ -110,14 +114,14 @@ var ownExample = false;
 
 var tasks = {
     squad: {
-        file: "../static/squad_examples.json",
+        file: squadExampleFile,
         samples: null,
         currentIndex: 0,
         layer_nr: 12,
         phaseLabels: squadPhaseLabels
     },
     hotpot: {
-        file: "../static/hotpot_examples.json",
+        file: hotpotExampleFile,
         samples: null,
         currentIndex: 0,
         layer_nr: 24,
