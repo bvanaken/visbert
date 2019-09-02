@@ -4,46 +4,57 @@
 <head>
     <meta charset="utf-8">
     <!-- Search Engine -->
-    <meta name="description" content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
+    <meta name="description"
+          content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
     <!-- Schema.org for Google -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta itemprop="name" content="How Does BERT Answer Questions?">
-    <meta itemprop="description" content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines."><meta name="author" content="Betty van Aken">
+    <meta itemprop="description"
+          content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
+    <meta name="author" content="Betty van Aken">
     <!-- Twitter -->
-    <meta name="twitter:card" content="summary">
+    <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="How Does BERT Answer Questions?">
-    <meta name="twitter:description" content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
+    <meta name="twitter:description"
+          content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
     <meta name="twitter:site" content="@betty_v_a">
     <meta name="twitter:creator" content="@betty_v_a">
-    <meta name="twitter:image:src" content="https://apps.datexis.com/visbert/img/preview.png">
+    <meta name="twitter:image" content="https://apps.datexis.com/visbert/static/img/preview.png">
     <!-- Open Graph general (Facebook, Pinterest & Google+) -->
-    <meta name="og:title" content="How Does BERT Answer Questions?">
-    <meta name="og:description" content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
-    <meta name="og:image" content="https://apps.datexis.com/visbert/img/preview.png">
-    <meta name="og:url" content="https://apps.datexis.com/visbert">
-    <meta name="og:site_name" content="How Does BERT Answer Questions?">
-    <meta name="og:locale" content="en_US">
-    <meta name="og:type" content="website">
+    <meta property="og:title" content="How Does BERT Answer Questions?">
+    <meta property="og:description"
+          content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
+    <meta property="og:image" content="https://apps.datexis.com/visbert/static/img/preview.png">
+    <meta property="og:url" content="https://apps.datexis.com/visbert">
+    <meta property="og:site_name" content="How Does BERT Answer Questions?">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:type" content="website">
 
     <link rel="stylesheet" href="./static/libs/bootstrap.min.css">
     <link rel="stylesheet" href="./static/libs/font-awesome.min.css">
     <!--<link rel="stylesheet" href="http://nitinhayaran.github.io/jRange/jquery.range.css">-->
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:100,300,400,500,700,900' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:100,300,400,500,700,900' rel='stylesheet'
+          type='text/css'>
     <link rel="stylesheet" href="./static/style.css">
-    <link rel="shortcut icon" href="https://prof.beuth-hochschule.de/fileadmin/Resources/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="https://prof.beuth-hochschule.de/fileadmin/Resources/images/favicon.ico"
+          type="image/x-icon">
 
     <title>How Does BERT Answer Questions?</title>
 
 </head>
 
 <body>
-<h2 class="title"><img src="./static/img/bert.png" style="margin-right: 10pt;width: 20pt;">How Does BERT Answer Questions?</h2>
+<h2 class="title"><img src="./static/img/bert.png" style="margin-right: 10pt;width: 20pt;">How Does BERT Answer
+    Questions?</h2>
 
 <div class="d-flex intro-text-container">
     <div class="flex-fill intro-text intro-text-left">
         <div class="intro-title">What is this about?</div>
-        Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token
-        representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines. <br><br>The tool demonstrates the findings from our paper: <span style="font-weight: 500;">Betty van
+        Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the
+        token
+        representations change throughout the layers of BERT. We observed that the transformations mostly pass four
+        phases related to traditional Question Answering pipelines. <br><br>The tool demonstrates the findings from our
+        paper: <span style="font-weight: 500;">Betty van
             Aken, Benjamin Winter, Alexander Löser and Felix Gers.
             <a href="https://openreview.net/pdf?id=SygMXE2vAE" target="_blank">How Does BERT Answer Questions? A
                 Layer-Wise
@@ -51,19 +62,29 @@
     </div>
     <div class="flex-fill intro-text intro-text-right">
         <div class="intro-title">The 4 phases of BERT's transformations</div>
-        <div class="phases-text"><b>1. Topical / Word Clusters</b> Equal words and topics are clustered without current concern
-        consideration.</div>
-        <div class="phases-text"><b>2. Connect Entities with Mentions and Attributes</b> Tokens are clustered based on their relation in the
+        <div class="phases-text"><b>1. Topical / Word Clusters</b> Equal words and topics are clustered without current
+            concern
+            consideration.
+        </div>
+        <div class="phases-text"><b>2. Connect Entities with Mentions and Attributes</b> Tokens are clustered based on
+            their relation in the
             context.<br></div>
-        <div class="phases-text"><b>3. Match Question with Supporting Facts</b> Relevant context parts can be found close to question tokens.</div>
-        <div class="phases-text"><b>4. Answer Extraction</b> The answer tokens are separated from the rest. Semantic clusters are dissolved.</div>
+        <div class="phases-text"><b>3. Match Question with Supporting Facts</b> Relevant context parts can be found
+            close to question tokens.
+        </div>
+        <div class="phases-text"><b>4. Answer Extraction</b> The answer tokens are separated from the rest. Semantic
+            clusters are dissolved.
+        </div>
     </div>
 </div>
 
 <div class="d-flex task-tab-wrapper">
-    <div class="p-2 flex-fill task-tab task-tab-active" id="squadTab" onclick="switchToSquad()">SQuAD <span class="footnote-id">[1]</span></div>
-    <div class="p-2 flex-fill task-tab" id="hotpotTab" onclick="switchToHotpot()">HotpotQA <span class="footnote-id">[2]</span></div>
-    <div class="p-2 flex-fill task-tab task-tab-deactived" id="babiTab">bAbI QA <span class="footnote-id">[3]</span></div>
+    <div class="p-2 flex-fill task-tab task-tab-active" id="squadTab" onclick="switchToSquad()">SQuAD <span
+            class="footnote-id">[1]</span></div>
+    <div class="p-2 flex-fill task-tab" id="hotpotTab" onclick="switchToHotpot()">HotpotQA <span
+            class="footnote-id">[2]</span></div>
+    <div class="p-2 flex-fill task-tab task-tab-deactived" id="babiTab">bAbI QA <span class="footnote-id">[3]</span>
+    </div>
 </div>
 <div class="question-form-container" align="center">
 
@@ -99,7 +120,8 @@
             <label class="control-label form-label" for="context-textarea" style="margin-top: 5pt;">Context</label>
             <textarea class="form-control form-textarea" id="context-textarea" name="context-textarea"
                       rows="7" placeholder="Enter context (must contain the answer)"></textarea>
-            <button class="form-button btn btn-info btn-block" onclick="requestPredictionAndVis()">Predict & Visualize <i class="fa fa-spinner fa-spin" id="button-spinner"></i>
+            <button class="form-button btn btn-info btn-block" onclick="requestPredictionAndVis()">Predict & Visualize
+                <i class="fa fa-spinner fa-spin" id="button-spinner"></i>
             </button>
         </div>
     </div>
@@ -122,9 +144,13 @@
     <canvas id="plot_canvas"></canvas>
 </div>
 <div class="footnotes">
-    <p><span class="footnote-id">[1]</span> Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Percy Liang. 2016. <i>SQuAD: 100, 000+ Questions for Machine Comprehension of Text.</i> In Proceedings of EMNLP 2016</p>
-    <p><span class="footnote-id">[2]</span> Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio, William W. Cohen, Ruslan Salakhutdinov, and Christopher D. Manning. 2018. <i>HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering.</i> In Proceedings of EMNLP 2018.</p>
-    <p><span class="footnote-id">[3]</span> Jason Weston, Antoine Bordes, Sumit Chopra, and Tomas Mikolov. 2016. <i>Towards AI-Complete Question Answering: A Set of Prerequisite Toy Tasks.</i> In Proceedings of ICLR 2016</p>
+    <p><span class="footnote-id">[1]</span> Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Percy Liang. 2016. <i>SQuAD:
+        100, 000+ Questions for Machine Comprehension of Text.</i> In Proceedings of EMNLP 2016</p>
+    <p><span class="footnote-id">[2]</span> Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio, William W. Cohen,
+        Ruslan Salakhutdinov, and Christopher D. Manning. 2018. <i>HotpotQA: A Dataset for Diverse, Explainable
+            Multi-hop Question Answering.</i> In Proceedings of EMNLP 2018.</p>
+    <p><span class="footnote-id">[3]</span> Jason Weston, Antoine Bordes, Sumit Chopra, and Tomas Mikolov. 2016. <i>Towards
+        AI-Complete Question Answering: A Set of Prerequisite Toy Tasks.</i> In Proceedings of ICLR 2016</p>
     <br>
     <br>
     <!--<p><b>by <a href="https://prof.beuth-hochschule.de/loeser/people/betty-van-aken/" target="_blank">Betty van Aken</a> (<a href="https://twitter.com/betty_v_a" target="_blank">@betty_v_a</a>) @ <a href="https://datexis.com" target="_blank">DATEXIS</a></b></p>-->
