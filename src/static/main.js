@@ -392,12 +392,17 @@ $(document).ready(function () {
     loadSamples('squad');
 
     var ctx = $('#plot_canvas');
+
+    var aspectRatio = (($(window).width() - 3000) / (-3060)).toFixed(1);
+    aspectRatio = Math.max(aspectRatio, 0.5);
+    aspectRatio = Math.min(aspectRatio, 1);
+
     scatterPlot = Chart.Scatter(ctx, {
         data: scatterChartData,
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            aspectRatio: 0.5,
+            aspectRatio: aspectRatio,
             pan: {
                 enabled: true,
                 mode: "xy",
