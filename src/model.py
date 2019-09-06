@@ -61,20 +61,15 @@ def tokenize_and_predict(sample, model_name):
 
     input_features = tokenize(example, tokenizer)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    logger.info("Running on device: {}".format(device))
-
     with torch.no_grad():
-        inputs = {'input_ids': input_features.input_ids.to(device),
-                  'attention_mask': input_features.input_mask.to(device),
-                  'token_type_ids': input_features.segment_ids.to(device)
+        inputs = {'input_ids': input_features.input_ids,
+                  'attention_mask': input_features.input_mask,
+                  'token_type_ids': input_features.segment_ids
                   }
 
         start_time = current_milli_time()
 
         # Make Prediction
-        model.to(device)
         output = model(**inputs)
 
         end_time = current_milli_time()

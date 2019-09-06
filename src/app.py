@@ -5,7 +5,7 @@ import model
 import visualize
 import logging
 import os
-from utils import decode_text
+from utils import decode_text, current_milli_time
 from data_utils import get_question_indices, get_answer_indices, find_sup_char_ids
 import argparse
 
@@ -72,6 +72,8 @@ def get_output():
 def generate_model_output(sample, model_name):
     prediction, hidden_states, features = model.tokenize_and_predict(sample, model_name)
 
+    start_time = current_milli_time()
+
     # build pca-layer list from hidden states
     tokens = features.tokens
     layers = []
@@ -118,6 +120,9 @@ def generate_model_output(sample, model_name):
         print(tokens[sup[0]:sup[1] + 1])
 
         token_indices['sups'].append({'start': sup[0], 'end': sup[1]})
+
+    end_time = current_milli_time()
+    logger.info("Postprocessing Time: {} ms".format(end_time - start_time))
 
     return prediction, layers, token_indices
 
