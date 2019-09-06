@@ -1,6 +1,7 @@
 
 var squadExampleFile = "./static/squad_examples.json";
 var hotpotExampleFile = "./static/hotpot_examples.json";
+var babiExampleFile = "./static/babi_examples.json";
 
 var color = Chart.helpers.color;
 
@@ -60,7 +61,7 @@ var phase2 = "Phase 2: Entity Relation Clusters";
 var phase3 = "Phase 3: Matching Supporting Facts with Question";
 var phase4 = "Phase 4: Answer Extraction";
 
-var squadPhaseLabels = {
+var basePhaseLabels = {
     0: phase1,
     1: phase1,
     2: phase1,
@@ -76,7 +77,7 @@ var squadPhaseLabels = {
     12: phase4
 };
 
-var hotpotPhaseLabels = {
+var largePhaseLabels = {
     0: phase1,
     1: phase1,
     2: phase1,
@@ -96,7 +97,7 @@ var hotpotPhaseLabels = {
     16: phase3,
     17: phase3,
     18: phase3  + " → " + phase4,
-    19: phase3,
+    19: phase4,
     20: phase4,
     21: phase4,
     22: phase4,
@@ -118,14 +119,21 @@ var tasks = {
         samples: null,
         currentIndex: 0,
         layer_nr: 12,
-        phaseLabels: squadPhaseLabels
+        phaseLabels: basePhaseLabels
+    },
+    babi: {
+        file: babiExampleFile,
+        samples: null,
+        currentIndex: 0,
+        layer_nr: 12,
+        phaseLabels: basePhaseLabels
     },
     hotpot: {
         file: hotpotExampleFile,
         samples: null,
         currentIndex: 0,
         layer_nr: 24,
-        phaseLabels: hotpotPhaseLabels
+        phaseLabels: largePhaseLabels
     }
 };
 
@@ -290,6 +298,13 @@ function processResult(data) {
     $('#button-spinner').hide();
 }
 
+function predictionError() {
+    var errorMessage = "\< Prediction not possible \>";
+    $('#predicted-answer').val(errorMessage);
+
+    $('#button-spinner').hide();
+}
+
 function requestPredictionAndVis() {
 
     $('#button-spinner').show();
@@ -316,7 +331,8 @@ function requestPredictionAndVis() {
         dataType: 'json',
         success: function (data) {
             processResult(data);
-        }
+        },
+        error: predictionError
     });
 }
 
@@ -353,6 +369,18 @@ function switchToSquad() {
     $('#squadTab').addClass('task-tab-active');
     $('#hotpotTab').removeClass('task-tab-active');
     $('#babiTab').removeClass('task-tab-active');
+
+    if (!ownExample) {
+        loadSamples();
+    }
+}
+
+function switchToBabi() {
+    currentTask = 'babi';
+
+    $('#squadTab').removeClass('task-tab-active');
+    $('#hotpotTab').removeClass('task-tab-active');
+    $('#babiTab').addClass('task-tab-active');
 
     if (!ownExample) {
         loadSamples();
@@ -407,7 +435,6 @@ $(document).ready(function () {
                 enabled: true,
                 mode: "xy",
                 speed: 0.01,
-                // threshold: 10,
                 rangeMin: {
                     x: 0,
                     y: 0

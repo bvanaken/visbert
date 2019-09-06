@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
         - name: visbert
-          image: registry.datexis.com/bvanaken/visbert:v1.0
+          image: registry.datexis.com/bvanaken/visbert:v1.1
           command:
             - /bin/sh
             - "-c"
@@ -21,14 +21,14 @@ spec:
             - name: client-port
               containerPort: 1337
           resources:
-            requests:
-              memory: 40Gi
-              cpu: 2
             limits:
-              memory: 40Gi
+              memory: 8Gi
+              nvidia.com/gpu: 1
           volumeMounts:
             - name: visbert-models-pvc
               mountPath: /models_dir
+      nodeSelector:
+        gpu: k80
       imagePullSecrets:
         - name: private-registry-auth
       volumes:
