@@ -19,12 +19,12 @@
           content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
     <meta name="twitter:site" content="@betty_v_a">
     <meta name="twitter:creator" content="@betty_v_a">
-    <meta name="twitter:image" content="https://apps.datexis.com/visbert/static/img/preview-small.png">
+    <meta name="twitter:image" content="https://apps.datexis.com/visbert/static/img/preview.png">
     <!-- Open Graph general (Facebook, Pinterest & Google+) -->
     <meta property="og:title" content="How Does BERT Answer Questions?">
     <meta property="og:description"
           content="Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the token representations change throughout the layers of BERT. We observed that the transformations mostly pass four phases related to traditional Question Answering pipelines.">
-    <meta property="og:image" content="https://apps.datexis.com/visbert/static/img/preview-small.png">
+    <meta property="og:image" content="https://apps.datexis.com/visbert/static/img/preview.png">
     <meta property="og:url" content="https://apps.datexis.com/visbert">
     <meta property="og:site_name" content="How Does BERT Answer Questions?">
     <meta property="og:locale" content="en_US">
@@ -121,8 +121,10 @@
             <label class="control-label form-label" for="ground-truth-answer">Ground Truth Answer</label>
             <input type="text" class="form-control" id="ground-truth-answer" name="ground-truth-answer"
                    placeholder="Enter correct answer (optional)">
-            <label class="control-label form-label" for="predicted-answer">Predicted Answer</label>
-            <input type="text" class="form-control" id="predicted-answer" name="predicted-answer" disabled>
+            <div class="control-label form-label form-label-inside">Predicted Answer</div>
+{#            <input type="text" class="form-control" id="predicted-answer" name="predicted-answer" disabled>#}
+
+            <div id="predicted-answer" class="predicted-answer"></div>
 
         </div>
         <div class="col">

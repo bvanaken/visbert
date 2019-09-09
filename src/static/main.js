@@ -244,8 +244,8 @@ function insertSample(sample) {
     $('#id-input').val(sample.id);
     $('#question-textarea').val(sample.question);
     $('#ground-truth-answer').val(sample.answer);
-    $('#predicted-answer').val("");
-    $('#predicted-answer').removeClass('form-control-highlighted');
+    $('#predicted-answer').text("");
+    $('#predicted-answer').removeClass('answer-highlighted');
     $('#context-textarea').val(sample.context);
 
     var task = tasks[currentTask];
@@ -270,8 +270,8 @@ function removeSample() {
     $('#id-input').prop('disabled', true);
     $('#question-textarea').val("");
     $('#ground-truth-answer').val("");
-    $('#predicted-answer').val("");
-    $('#predicted-answer').removeClass('form-control-highlighted');
+    $('#predicted-answer').text("");
+    $('#predicted-answer').removeClass('answer-highlighted');
     $('#context-textarea').val("");
 
     currentSups = null;
@@ -304,8 +304,8 @@ function parseText(component) {
 function processResult(data) {
     var predictedAnswer = data.prediction.text;
 
-    $('#predicted-answer').val(predictedAnswer);
-    $('#predicted-answer').addClass('form-control-highlighted');
+    $('#predicted-answer').text(predictedAnswer);
+    $('#predicted-answer').addClass('answer-highlighted');
 
     hiddenStates = data.hidden_states;
     tokenInfo.token_indices = data.token_indices;
@@ -321,7 +321,7 @@ function processResult(data) {
 
 function predictionError() {
     var errorMessage = "\< Prediction not possible \>";
-    $('#predicted-answer').val(errorMessage);
+    $('#predicted-answer').text(errorMessage);
 
     $('#button-spinner').hide();
 }
