@@ -482,6 +482,10 @@ $(document).ready(function () {
             },
             scales: {
                 xAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'PC 1'
+                    },
                     ticks: {
                         maxRotation: 0,
                         precision: 0,
@@ -493,6 +497,10 @@ $(document).ready(function () {
                     }
                 }],
                 yAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'PC 2'
+                    },
                     ticks: {
                         maxRotation: 0,
                         precision: 0,
@@ -501,6 +509,7 @@ $(document).ready(function () {
                         callback: function (value, index, values) {
                             return Math.round(value);
                         }
+
                     }
                 }]
             },
