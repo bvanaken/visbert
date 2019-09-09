@@ -5,15 +5,16 @@ var babiExampleFile = "./static/babi_examples.json";
 var color = Chart.helpers.color;
 
 var fontDefault = {
-    size: 12,
+    size: 14,
     weight: 'normal',
 
 };
 var fontBold = {
+    size: 14,
     weight: 'bold'
 };
 var fontHighlighted = {
-    size: 14,
+    size: 16,
     weight: 'bold'
 };
 
