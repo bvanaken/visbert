@@ -60,7 +60,7 @@ input, textarea, select { font-family:inherit; font-weight: 400; }
 
 .predicted-answer {
     font-size: 10pt;
-    height: 17pt;
+    min-height: 17pt;
     border-bottom: 1px solid #dedede;
     padding-left: 9pt;
 }
