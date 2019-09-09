@@ -41,6 +41,9 @@
 
     <title>How Does BERT Answer Questions?</title>
 
+    <script src="./static/cl.js"></script>
+    <script async src="//static.getclicky.com/js"></script>
+
 </head>
 
 <body>
@@ -79,11 +82,12 @@
 </div>
 
 <div class="d-flex task-tab-wrapper">
-    <div class="p-2 flex-fill task-tab task-tab-active" id="squadTab" onclick="switchToSquad()">SQuAD <span
+    <div class="p-2 flex-fill task-tab task-tab-active" id="squadTab" onclick="switchToSquad(); clicky.log('#home','squad');">SQuAD <span
             class="footnote-id">[1]</span></div>
-    <div class="p-2 flex-fill task-tab" id="hotpotTab" onclick="switchToHotpot()">HotpotQA <span
+    <div class="p-2 flex-fill task-tab" id="hotpotTab" onclick="switchToHotpot(); clicky.log('#home','hotpot');">HotpotQA <span
             class="footnote-id">[2]</span></div>
-    <div class="p-2 flex-fill task-tab task-tab" id="babiTab" onclick="switchToBabi()">bAbI QA <span class="footnote-id">[3]</span>
+    <div class="p-2 flex-fill task-tab task-tab" id="babiTab" onclick="switchToBabi(); clicky.log('#home','babi');">bAbI QA <span
+            class="footnote-id">[3]</span>
     </div>
 </div>
 <div class="question-form-container" align="center">
@@ -96,9 +100,9 @@
             <div style="margin-bottom:-12pt;"></div>
 
             <span class=".no-wrap-text">
-                <span class="id-switcher-label" onclick="switchIdLeft()"><</span>
+                <span id="id-switcher-left" class="id-switcher-label" onclick="switchIdLeft()"><</span>
                 <input type="text" id="id-input" name="id-input" class="id-switcher-input">
-                <span class="id-switcher-label" onclick="switchIdRight()">></span>
+                <span id="id-switcher-right" class="id-switcher-label" onclick="switchIdRight()">></span>
             </span>
             <span class=".no-wrap-text own-example-input">
                 <input type="checkbox" id="own-example-check" name="own-example-check">
@@ -113,14 +117,14 @@
             <input type="text" class="form-control" id="ground-truth-answer" name="ground-truth-answer"
                    placeholder="Enter correct answer (optional)">
             <label class="control-label form-label" for="predicted-answer">Predicted Answer</label>
-            <input type="text" class="form-control" id="predicted-answer" name="predicted-answer" disabled>
+            <input type="text" class="form-control form-control-highlighted" id="predicted-answer" name="predicted-answer" disabled>
 
         </div>
         <div class="col">
             <label class="control-label form-label" for="context-textarea" style="margin-top: 5pt;">Context</label>
             <textarea class="form-control form-textarea" id="context-textarea" name="context-textarea"
                       rows="7" placeholder="Enter context (must contain the answer)"></textarea>
-            <button class="form-button btn btn-info btn-block" onclick="requestPredictionAndVis()">Predict & Visualize
+            <button class="form-button btn btn-info btn-block" onclick="requestPredictionAndVis(); clicky.log('#home','predict');">Predict & Visualize
                 <i class="fa fa-spinner fa-spin" id="button-spinner"></i>
             </button>
         </div>
@@ -137,7 +141,7 @@
     <!--<span class="form-label layer-label" id="layer_nr_label">Layer 0</span>-->
     <input type="range" id="layer-nr-slider" min="0" max="12" step="1" value="0"/><br>
 </div>
-    <div id="phase-label" class="phases-label">Phase 1: Topical / Word Clusters</div>
+<div id="phase-label" class="phases-label">Phase 1: Topical / Word Clusters</div>
 </div>
 
 <div class="canvas-container">
@@ -153,7 +157,7 @@
         AI-Complete Question Answering: A Set of Prerequisite Toy Tasks.</i> In Proceedings of ICLR 2016</p>
     <br>
     <br>
-    <!--<p><b>by <a href="https://prof.beuth-hochschule.de/loeser/people/betty-van-aken/" target="_blank">Betty van Aken</a> (<a href="https://twitter.com/betty_v_a" target="_blank">@betty_v_a</a>) @ <a href="https://datexis.com" target="_blank">DATEXIS</a></b></p>-->
+    <p><b>Contact: <a href="https://prof.beuth-hochschule.de/loeser/people/betty-van-aken/" target="_blank">Betty van Aken</a> (<a href="https://twitter.com/betty_v_a" target="_blank">@betty_v_a</a>) @ <a href="https://datexis.com" target="_blank">DATEXIS</a></b></p>
 
 </div>
 

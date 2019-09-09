@@ -58,6 +58,12 @@ input, textarea, select { font-family:inherit; font-weight: 400; }
     margin-left:5pt;
 }
 
+.form-control-highlighted {
+    border: 1px solid purple;
+    color: purple;
+    font-weight: bold;
+}
+
 .no-wrap-text {
     white-space:nowrap;
 }
@@ -194,6 +200,11 @@ input[type=text] {
     color: #212529;
 }
 
+.id-switcher-label-inactive {
+    color: #808080;
+    cursor: default;
+}
+
 input[type=range] {
     -webkit-appearance: none;
     width: 100%;
@@ -219,7 +230,7 @@ input[type=range]::-webkit-slider-thumb {
     border: 0px solid #000000;
     height: 17px;
     width: 17px;
-    border-radius: 17px;
+    border-radius: 20px;
     background: #17a2b8;
     cursor: pointer;
     -webkit-appearance: none;
@@ -245,7 +256,7 @@ input[type=range]::-moz-range-thumb {
     border: 0px solid #000000;
     height: 17px;
     width: 17px;
-    border-radius: 17px;
+    border-radius: 20px;
     background: #17a2b8;
     cursor: pointer;
 }
@@ -278,7 +289,7 @@ input[type=range]::-ms-thumb {
     border: 0px solid #000000;
     height: 17px;
     width: 17px;
-    border-radius: 17px;
+    border-radius: 20px;
     background: #17a2b8;
     cursor: pointer;
     height: 8.4px;

@@ -1,4 +1,3 @@
-
 var squadExampleFile = "./static/squad_examples.json";
 var hotpotExampleFile = "./static/hotpot_examples.json";
 var babiExampleFile = "./static/babi_examples.json";
@@ -96,7 +95,7 @@ var largePhaseLabels = {
     15: phase3,
     16: phase3,
     17: phase3,
-    18: phase3  + " → " + phase4,
+    18: phase3 + " → " + phase4,
     19: phase4,
     20: phase4,
     21: phase4,
@@ -245,7 +244,23 @@ function insertSample(sample) {
     $('#question-textarea').val(sample.question);
     $('#ground-truth-answer').val(sample.answer);
     $('#predicted-answer').val("");
+    $('#predicted-answer').removeClass('form-control-highlighted');
     $('#context-textarea').val(sample.context);
+
+    var task = tasks[currentTask];
+
+    if (task.currentIndex === 0) {
+        $('#id-switcher-left').addClass("id-switcher-label-inactive");
+
+    } else {
+        $('#id-switcher-left').removeClass('id-switcher-label-inactive');
+    }
+
+    if (task.currentIndex >= task.samples.length - 1) {
+        $('#id-switcher-right').addClass('id-switcher-label-inactive');
+    } else {
+        $('#id-switcher-right').removeClass('id-switcher-label-inactive');
+    }
 
     currentSups = sample.sup_ids;
 }
@@ -255,9 +270,13 @@ function removeSample() {
     $('#question-textarea').val("");
     $('#ground-truth-answer').val("");
     $('#predicted-answer').val("");
+    $('#predicted-answer').removeClass('form-control-highlighted');
     $('#context-textarea').val("");
 
     currentSups = null;
+
+    $('#id-switcher-right').addClass('id-switcher-label-inactive');
+    $('#id-switcher-left').addClass('id-switcher-label-inactive');
 }
 
 function parseText(component) {
@@ -285,6 +304,7 @@ function processResult(data) {
     var predictedAnswer = data.prediction.text;
 
     $('#predicted-answer').val(predictedAnswer);
+    $('#predicted-answer').addClass('form-control-highlighted');
 
     hiddenStates = data.hidden_states;
     tokenInfo.token_indices = data.token_indices;
@@ -391,6 +411,7 @@ function switchIdLeft() {
     var task = tasks[currentTask];
 
     if (task.currentIndex > 0 && !ownExample) {
+
         task.currentIndex = task.currentIndex - 1;
 
         insertSample(task.samples[task.currentIndex]);
