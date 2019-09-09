@@ -54,6 +54,9 @@ def tokenize_and_predict(sample, model_name):
     elif model_name == "hotpot":
         model = hotpot_model
         tokenizer = large_tokenizer
+    elif model_name == "babi":
+        model = babi_model
+        tokenizer = base_tokenizer
     else:
         raise Exception
 
@@ -104,14 +107,17 @@ def tokenize(example, tokenizer):
 def init(model_dir):
     global squad_model
     global hotpot_model
+    global babi_model
     global base_tokenizer
     global large_tokenizer
 
     squad_model_file = os.path.join(model_dir, "squad.bin")
+    babi_model_file = os.path.join(model_dir, "babi.bin")
     hotpot_model_file = os.path.join(model_dir, "hotpot_distract.bin")
     cache_dir = os.path.join(model_dir, "tmp")
 
     squad_model = load_model(squad_model_file, 'bert-base-uncased', cache_dir=cache_dir)
+    babi_model = load_model(babi_model_file, 'bert-base-uncased', cache_dir=cache_dir)
     base_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', cache_dir=cache_dir, do_lower_case=True)
 
     hotpot_model = load_model(hotpot_model_file, 'bert-large-uncased', cache_dir=cache_dir)
