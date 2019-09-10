@@ -177,7 +177,7 @@ input[type=text] {
 }
 
 .canvas-container {
-    margin-left: -5pt;
+    margin-left: -36pt;
     margin-right: -5pt;
     margin-bottom: 50pt;
 }
@@ -321,6 +321,10 @@ canvas {
         margin-left: 0;
         display: block;
     }
+    .canvas-container {
+        margin-left: -30pt;
+        margin-right: -5pt;
+    }
 }
 
 @media (max-width: 715px) {
@@ -363,7 +367,7 @@ canvas {
         width: 100%;
     }
     .canvas-container {
-        margin-left: 5pt;
+        margin-left: -10pt;
         margin-right: 5pt;
     }
 }
