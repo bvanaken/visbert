@@ -36,6 +36,7 @@
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:100,300,400,500,700,900' rel='stylesheet'
           type='text/css'>
     <link rel="stylesheet" href="./static/style.css">
+    <link rel="stylesheet" href="./static/nohate-style.css">
     <link rel="shortcut icon" href="https://prof.beuth-hochschule.de/fileadmin/Resources/images/favicon.ico"
           type="image/x-icon">
 
@@ -52,8 +53,7 @@
 </head>
 
 <body>
-<h2 class="title"><img src="./static/img/bert.png" class="bert-image">How Does BERT Answer
-    Questions?</h2>
+<h2 class="title"><img src="./static/img/bert.png" class="bert-image">How Does BERT Classify Hate Speech?</h2>
 
 <div class="d-flex intro-text-container">
     <div class="flex-fill intro-text intro-text-left">
@@ -61,82 +61,51 @@
         Watch how BERT (fine-tuned on QA tasks) transforms tokens to get to the right answers. This demo shows how the
         token
         representations change throughout the layers of BERT. We observed that the transformations mostly pass four
-        phases related to traditional Question Answering pipelines. <br><br>The tool demonstrates the findings from our
-        paper: <span style="font-weight: 500;">Betty van
+        phases related to traditional Question Answering pipelines.
+    </div>
+    <div class="flex-fill intro-text intro-text-right">
+        <div class="intro-title">Read the publication</div>
+        The tool demonstrates the findings from our
+        paper:<br><span style="font-weight: 500;">Betty van
             Aken, Benjamin Winter, Alexander Löser and Felix Gers.
             <a href="https://arxiv.org/abs/1909.04925" target="_blank" onclick="clicky.log('#home','paper');">How Does BERT Answer Questions? A
                 Layer-Wise
                 Analysis of Transformer Representations.</a> CIKM 2019.</span>
     </div>
-    <div class="flex-fill intro-text intro-text-right">
-        <div class="intro-title">The 4 phases of BERT's transformations</div>
-        <div class="phases-text"><b>1. Topical / Word Clusters</b> Equal words and topics are clustered without current
-            concern
-            consideration.
-        </div>
-        <div class="phases-text"><b>2. Connect Entities with Mentions and Attributes</b> Tokens are clustered based on
-            their relation in the
-            context.<br></div>
-        <div class="phases-text"><b>3. Match Question with Supporting Facts</b> Relevant context parts can be found
-            close to question tokens.
-        </div>
-        <div class="phases-text"><b>4. Answer Extraction</b> The answer tokens are separated from the rest. Semantic
-            clusters are dissolved.
-        </div>
-    </div>
 </div>
 
-<div class="d-flex task-tab-wrapper">
-    <div class="p-2 flex-fill task-tab task-tab-active" id="squadTab" onclick="switchToSquad(); clicky.log('#home','squad');">SQuAD <span
-            class="footnote-id">[1]</span></div>
-    <div class="p-2 flex-fill task-tab" id="hotpotTab" onclick="switchToHotpot(); clicky.log('#home','hotpot');">HotpotQA <span
-            class="footnote-id">[2]</span></div>
-    <div class="p-2 flex-fill task-tab task-tab" id="babiTab" onclick="switchToBabi(); clicky.log('#home','babi');">bAbI QA <span
-            class="footnote-id">[3]</span>
-    </div>
-</div>
-<div class="question-form-container" align="center">
+<div class="question-form-container">
 
-    <div class="row">
-        <div class="col" align="left">
-
-            <label class="form-label form-label-inside" for="id-input">Testset ID</label>
-
-            <div style="margin-bottom:-12pt;"></div>
+            <div class="row">
+            <label class="form-label form-label-inside" for="id-input" style="margin-bottom:-12pt;">Testset ID</label>
+            </div>
+            <div class="row">
 
             <span class=".no-wrap-text">
                 <span id="id-switcher-left" class="id-switcher-label" onclick="switchIdLeft()"><</span>
                 <input type="text" id="id-input" name="id-input" class="id-switcher-input">
                 <span id="id-switcher-right" class="id-switcher-label" onclick="switchIdRight()">></span>
             </span>
-            <span class=".no-wrap-text own-example-input">
-                <input type="checkbox" id="own-example-check" name="own-example-check">
-                <label class="form-label form-label-inside" for="own-example-check">Enter own example</label>
-            </span>
+            </div>
+            <div class="row">
+            <label class="control-label form-label" for="input-textarea" style="margin-top: 5pt;">User Comment</label>
+            <textarea class="form-control form-textarea" id="input-textarea" name="input-textarea"
+                      rows="4" placeholder="Enter example text"></textarea>
+            </div>
+            <div class="row">
+                <div class="col" align="left">
+                    <div class="control-label form-label form-label-inside">Predicted Answer</div>
+                    <div id="predicted-answer" class="predicted-answer"></div>
 
-            <br>
-            <label class="control-label form-label" for="question-textarea">Question</label>
-            <textarea class="form-control form-textarea" id="question-textarea" name="question-textarea"
-                      rows="2" placeholder="Enter own question"></textarea>
-            <label class="control-label form-label" for="ground-truth-answer">Ground Truth Answer</label>
-            <input type="text" class="form-control" id="ground-truth-answer" name="ground-truth-answer"
-                   placeholder="Enter correct answer (optional)">
-            <div class="control-label form-label form-label-inside">Predicted Answer</div>
-{#            <input type="text" class="form-control" id="predicted-answer" name="predicted-answer" disabled>#}
-
-            <div id="predicted-answer" class="predicted-answer"></div>
-
-        </div>
-        <div class="col">
-            <label class="control-label form-label" for="context-textarea" style="margin-top: 5pt;">Context</label>
-            <textarea class="form-control form-textarea" id="context-textarea" name="context-textarea"
-                      rows="7" placeholder="Enter context (must contain the answer)"></textarea>
-            <button class="form-button btn btn-info btn-block" onclick="requestPredictionAndVis(); clicky.log('#home','predict');">Predict & Visualize
-                <i class="fa fa-spinner fa-spin" id="button-spinner"></i>
-            </button>
-        </div>
-    </div>
-</div>
+                    <button class="form-button btn btn-info btn-block" onclick="requestPredictionAndVis(); clicky.log('#home','predict');">Predict & Visualize
+                    <i class="fa fa-spinner fa-spin" id="button-spinner"></i>
+                    </button>
+                </div>
+                <div class="col" align="left">
+                    <div class="control-label form-label form-label-inside">Ground Truth</div>
+                    <div id="ground-truth" class="predicted-answer"></div>
+                </div>
+            </div>
 </div>
 
 <div class="slider-container" align="left">
@@ -155,13 +124,6 @@
     <canvas id="plot_canvas"></canvas>
 </div>
 <div class="footnotes">
-    <p><span class="footnote-id">[1]</span> Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Percy Liang. 2016. <i>SQuAD:
-        100, 000+ Questions for Machine Comprehension of Text.</i> In Proceedings of EMNLP 2016</p>
-    <p><span class="footnote-id">[2]</span> Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio, William W. Cohen,
-        Ruslan Salakhutdinov, and Christopher D. Manning. 2018. <i>HotpotQA: A Dataset for Diverse, Explainable
-            Multi-hop Question Answering.</i> In Proceedings of EMNLP 2018.</p>
-    <p><span class="footnote-id">[3]</span> Jason Weston, Antoine Bordes, Sumit Chopra, and Tomas Mikolov. 2016. <i>Towards
-        AI-Complete Question Answering: A Set of Prerequisite Toy Tasks.</i> In Proceedings of ICLR 2016</p>
     <br>
     <br>
     <p><b>Contact: <a href="https://prof.beuth-hochschule.de/loeser/people/betty-van-aken/" target="_blank">Betty van Aken</a> (<a href="https://twitter.com/betty_v_a" target="_blank">@betty_v_a</a>) @ <a href="http://datexis.com" target="_blank">DATEXIS</a></b></p>
@@ -176,7 +138,7 @@
 <script src="./static/libs/hammer.js"></script>
 <script src="./static/libs/chartjs-plugin-zoom@0.7.3"></script>
 <script src="./static/main.js"></script>
-<script src="./static/qa.js"></script>
+<script src="./static/nohate.js"></script>
 
 </body>
 

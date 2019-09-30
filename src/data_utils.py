@@ -71,7 +71,7 @@ class SquadExample(object):
         return s
 
 
-class InputFeatures(object):
+class QAInputFeatures(object):
     """A single set of features of data."""
 
     def __init__(self,
@@ -107,6 +107,16 @@ class InputFeatures(object):
         self.start_position = start_position
         self.end_position = end_position
         self.is_impossible = is_impossible
+
+
+class TextInputFeatures(object):
+    """A single set of features of data."""
+
+    def __init__(self, input_ids, input_mask, segment_ids, tokens):
+        self.input_ids = input_ids
+        self.input_mask = input_mask
+        self.segment_ids = segment_ids
+        self.tokens = tokens
 
 
 def read_squad_example(example):
@@ -171,13 +181,13 @@ def read_squad_example(example):
         sup_ids=sup_token_pos_ids)
 
 
-def convert_example_to_features(example, tokenizer, max_seq_length,
-                                doc_stride, max_query_length, is_training,
-                                cls_token_at_end=False,
-                                cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
-                                sequence_a_segment_id=0, sequence_b_segment_id=1,
-                                cls_token_segment_id=0, pad_token_segment_id=0,
-                                mask_padding_with_zero=True):
+def convert_qa_example_to_features(example, tokenizer, max_seq_length,
+                                   doc_stride, max_query_length, is_training,
+                                   cls_token_at_end=False,
+                                   cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
+                                   sequence_a_segment_id=0, sequence_b_segment_id=1,
+                                   cls_token_segment_id=0, pad_token_segment_id=0,
+                                   mask_padding_with_zero=True):
     """Loads a data file into a list of `InputBatch`s."""
 
     unique_id = 1000000000
@@ -353,7 +363,7 @@ def convert_example_to_features(example, tokenizer, max_seq_length,
             logger.info(
                 "answer: %s" % (answer_text))
 
-        return InputFeatures(
+        return QAInputFeatures(
             unique_id=unique_id,
             example_index=0,
             doc_span_index=doc_span_index,
@@ -370,6 +380,40 @@ def convert_example_to_features(example, tokenizer, max_seq_length,
             end_position=end_position,
             sup_ids=sup_ids,
             is_impossible=span_is_impossible)
+
+
+def convert_text_example_to_features(example, max_seq_length, tokenizer):
+    """Loads a data file into an `InputBatch`."""
+
+    tokens = tokenizer.tokenize(example.text)
+
+    # Account for [CLS] and [SEP] with "- 2"
+    if len(tokens) > max_seq_length - 2:
+        tokens = tokens[:(max_seq_length - 2)]
+
+    tokens = ["[CLS]"] + tokens + ["[SEP]"]
+    segment_ids = [0] * len(tokens)
+
+    input_ids = tokenizer.convert_tokens_to_ids(tokens)
+
+    # The mask has 1 for real tokens and 0 for padding tokens. Only real
+    # tokens are attended to.
+    input_mask = [1] * len(input_ids)
+
+    # Zero-pad up to the sequence length.
+    padding = [0] * (max_seq_length - len(input_ids))
+    input_ids += padding
+    input_mask += padding
+    segment_ids += padding
+
+    assert len(input_ids) == max_seq_length
+    assert len(input_mask) == max_seq_length
+    assert len(segment_ids) == max_seq_length
+
+    return TextInputFeatures(input_ids=input_ids,
+                             input_mask=input_mask,
+                             segment_ids=segment_ids,
+                             tokens=tokens)
 
 
 def split_into_sentences(text):

@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
+from flask import Flask, request, jsonify, render_template, send_file
 import waitress
 
-import model
+import qa_model
+import nohate_model
 import visualize
 import logging
 import os
@@ -23,13 +24,18 @@ def index():
     return render_template("demo.html")
 
 
+@app.route(base_route + "/nohate")
+def nohate_index():
+    return render_template("nohate-demo.html")
+
+
 @app.route(base_route + "/static/<path:filename>")
 def image(filename):
     return send_file("./static/" + filename)
 
 
 @app.route(base_route + "/predict", methods=['POST'])
-def get_output():
+def get_qa_output():
     data = request.get_json()
 
     input_sample = data["sample"]
@@ -58,7 +64,7 @@ def get_output():
               "answer": answer_dict,
               "sup_ids": sup_ids}
 
-    prediction, layers, token_indices = generate_model_output(sample, model_name)
+    prediction, layers, token_indices = generate_qa_model_output(sample, model_name)
 
     output = {
         'hidden_states': layers,
@@ -69,8 +75,65 @@ def get_output():
     return jsonify(output)
 
 
-def generate_model_output(sample, model_name):
-    prediction, hidden_states, features = model.tokenize_and_predict(sample, model_name)
+@app.route(base_route + "/predict_nohate", methods=['POST'])
+def get_nohate_output():
+    data = request.get_json()
+
+    input_sample = data["sample"]
+    model_name = data["model"]
+
+    sample = {"id": decode_text(input_sample["id"]),
+              "text": decode_text(input_sample["text"])}
+
+    prediction, layers = generate_nohate_model_output(sample, model_name)
+
+    output = {
+        'hidden_states': layers,
+        'prediction': prediction,
+    }
+
+    return jsonify(output)
+
+
+def generate_nohate_model_output(sample, model_name):
+    prediction, hidden_states, features = nohate_model.tokenize_and_predict(sample, model_name)
+
+    start_time = current_milli_time()
+
+    # build pca-layer list from hidden states
+    tokens = features.tokens
+    layers = []
+    for layer in hidden_states:
+
+        # cut off padding
+        token_vectors = layer[0][:len(tokens)]
+
+        token_vectors = token_vectors[0:-1][:]
+
+        # dimensionality reduction
+        layer_reduced = visualize.reduce(token_vectors, "pca", 2)
+
+        # build json with point information
+        points = []
+        for i, val in enumerate(layer_reduced[0]):
+            point = {
+                'x': val,
+                'y': layer_reduced[1][i],
+                'label': tokens[i]
+            }
+
+            points.append(point)
+
+        layers.append(points)
+
+    end_time = current_milli_time()
+    logger.info("Postprocessing Time: {} ms".format(end_time - start_time))
+
+    return prediction, layers
+
+
+def generate_qa_model_output(sample, model_name):
+    prediction, hidden_states, features = qa_model.tokenize_and_predict(sample, model_name)
 
     start_time = current_milli_time()
 
@@ -133,7 +196,10 @@ def run():
     args = parser.parse_args()
 
     logger.debug("Init BERT models")
-    model.init(args.model_dir)
+    # qa_model.init(args.model_dir)
+
+    logger.debug("Init NOHATE models")
+    nohate_model.init(args.model_dir)
 
     logger.debug("Run app")
     waitress.serve(app.run("0.0.0.0", port=1337))

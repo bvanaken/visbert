@@ -1,5 +1,5 @@
 from pytorch_transformers import BertForQuestionAnswering, BertTokenizer, BertConfig
-from data_utils import (read_squad_example, convert_example_to_features, parse_prediction, RawResult)
+from data_utils import (read_squad_example, convert_qa_example_to_features, parse_prediction, RawResult)
 import torch
 from utils import current_milli_time
 import logging
@@ -88,12 +88,12 @@ def tokenize_and_predict(sample, model_name):
 
 
 def tokenize(example, tokenizer):
-    features = convert_example_to_features(example=example,
-                                           tokenizer=tokenizer,
-                                           max_seq_length=384,
-                                           doc_stride=128,
-                                           max_query_length=64,
-                                           is_training=False)
+    features = convert_qa_example_to_features(example=example,
+                                              tokenizer=tokenizer,
+                                              max_seq_length=384,
+                                              doc_stride=128,
+                                              max_query_length=64,
+                                              is_training=False)
 
     features.input_ids = torch.tensor([features.input_ids], dtype=torch.long)
     features.input_mask = torch.tensor([features.input_mask], dtype=torch.long)

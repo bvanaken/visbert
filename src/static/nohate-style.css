@@ -1,0 +1,35 @@
+.title {
+    text-align: left;
+    padding-top: 20pt;
+    padding-bottom: 15pt;
+    color:#117281;
+    font-weight: 700;
+}
+
+.intro-text {
+    color: #666;
+    font-size: 12pt;
+    font-weight: 300;
+    width: 100%;
+}
+
+.predicted-answer {
+    font-size: 11pt;
+    font-weight: 700;
+    min-height: 17pt;
+    border-bottom: 1px solid #dedede;
+    padding-left: 9pt;
+}
+
+.question-form-container {
+    padding: 10pt  10pt 20pt 20pt;
+    background-color: #f4f7f8;
+    margin-bottom: 10pt;
+    border: solid #ccc 1px;
+    box-shadow: 8px 8px 10px #88888833;
+}
+
+.form-textarea {
+    font-size: 11pt;
+    margin-bottom: 5pt;
+}
