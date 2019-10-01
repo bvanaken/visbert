@@ -24,7 +24,7 @@ body {
 
 .intro-text {
     color: #666;
-    font-size: 9pt;
+    font-size: 10pt;
     font-weight: 300;
     width: 100%;
 }
@@ -334,6 +334,9 @@ canvas {
     }
     .title {
         text-align: center;
+    }
+    .intro-text {
+        font-size: 9pt;
     }
     .slider-container {
         text-align: center;
