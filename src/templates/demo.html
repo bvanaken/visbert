@@ -64,7 +64,7 @@
         phases related to traditional Question Answering pipelines. <br><br>The tool demonstrates the findings from our
         paper: <span style="font-weight: 500;">Betty van
             Aken, Benjamin Winter, Alexander Löser and Felix Gers.
-            <a href="https://arxiv.org/abs/1909.04925" target="_blank" onclick="clicky.log('#home','paper');">How Does BERT Answer Questions? A
+            <a href="https://arxiv.org/abs/1909.04925" target="_blank" onclick="clicky.log('#paper','paper');">How Does BERT Answer Questions? A
                 Layer-Wise
                 Analysis of Transformer Representations.</a> CIKM 2019.</span>
     </div>
@@ -87,11 +87,11 @@
 </div>
 
 <div class="d-flex task-tab-wrapper">
-    <div class="p-2 flex-fill task-tab task-tab-active" id="squadTab" onclick="switchToSquad(); clicky.log('#home','squad');">SQuAD <span
+    <div class="p-2 flex-fill task-tab task-tab-active" id="squadTab" onclick="switchToSquad(); clicky.log('#squad','squad');">SQuAD <span
             class="footnote-id">[1]</span></div>
-    <div class="p-2 flex-fill task-tab" id="hotpotTab" onclick="switchToHotpot(); clicky.log('#home','hotpot');">HotpotQA <span
+    <div class="p-2 flex-fill task-tab" id="hotpotTab" onclick="switchToHotpot(); clicky.log('#hotpot','hotpot');">HotpotQA <span
             class="footnote-id">[2]</span></div>
-    <div class="p-2 flex-fill task-tab task-tab" id="babiTab" onclick="switchToBabi(); clicky.log('#home','babi');">bAbI QA <span
+    <div class="p-2 flex-fill task-tab task-tab" id="babiTab" onclick="switchToBabi(); clicky.log('#babi','babi');">bAbI QA <span
             class="footnote-id">[3]</span>
     </div>
 </div>
@@ -131,7 +131,7 @@
             <label class="control-label form-label" for="context-textarea" style="margin-top: 5pt;">Context</label>
             <textarea class="form-control form-textarea" id="context-textarea" name="context-textarea"
                       rows="7" placeholder="Enter context (must contain the answer)"></textarea>
-            <button class="form-button btn btn-info btn-block" onclick="requestPredictionAndVis(); clicky.log('#home','predict');">Predict & Visualize
+            <button class="form-button btn btn-info btn-block" onclick="requestPredictionAndVis(); clicky.log('#predict','predict');">Predict & Visualize
                 <i class="fa fa-spinner fa-spin" id="button-spinner"></i>
             </button>
         </div>
@@ -164,7 +164,7 @@
         AI-Complete Question Answering: A Set of Prerequisite Toy Tasks.</i> In Proceedings of ICLR 2016</p>
     <br>
     <br>
-    <p><b>Contact: <a href="https://prof.beuth-hochschule.de/loeser/people/betty-van-aken/" target="_blank">Betty van Aken</a> (<a href="https://twitter.com/betty_v_a" target="_blank">@betty_v_a</a>) @ <a href="http://datexis.com" target="_blank">DATEXIS</a></b></p>
+    <p><b>Contact: <a href="https://prof.beuth-hochschule.de/loeser/people/betty-van-aken/" onclick="clicky.log('#profile','profile');" target="_blank">Betty van Aken</a> (<a href="https://twitter.com/betty_v_a" onclick="clicky.log('#twitter','twitter');" target="_blank">@betty_v_a</a>) @ <a href="http://datexis.com" onclick="clicky.log('#datexis','datexis');" target="_blank">DATEXIS</a></b></p>
 
 </div>
 
