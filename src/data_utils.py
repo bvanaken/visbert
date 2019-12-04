@@ -509,8 +509,8 @@ def parse_prediction(example, features, result, max_answer_length=30, do_lower_c
                 continue
             if end_index not in features.token_to_orig_map:
                 continue
-            if not features.token_is_max_context.get(start_index, False):
-                continue
+            # if not features.token_is_max_context.get(start_index, False):
+            #     continue
             if end_index < start_index:
                 continue
             length = end_index - start_index + 1
