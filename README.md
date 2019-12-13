@@ -12,7 +12,7 @@ Install NLTK Punkt:
 
 `python -m nltk.downloader punkt`
 
-Run app with model directory as argument (the model directory must currently contain the models: 'squad.bin', 'hotpot_distract.bin' and 'babi.bin':
+Run app with model directory as argument (the model directory must currently contain the models: 'squad.bin', 'hotpot_distract.bin' and 'babi.bin'):
 
 `python src/app.py {model_directory}`
 
