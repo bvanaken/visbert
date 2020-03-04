@@ -13,7 +13,7 @@ FORMAT = '%(asctime)-15s %(message)s'
 logging.basicConfig(format=FORMAT, level=os.environ.get("LOGLEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
-base_route = "/visbert"
+base_route = ""
 
 app = Flask(__name__, static_url_path='/static')
 

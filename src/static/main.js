@@ -343,7 +343,7 @@ function requestPredictionAndVis() {
     data.model = currentTask;
 
     $.ajax({
-        url: '/visbert/predict',
+        url: '/predict',
         type: 'post',
         data: JSON.stringify(data),
         headers: {
