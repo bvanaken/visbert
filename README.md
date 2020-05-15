@@ -23,6 +23,8 @@ When using our tool, please cite the following paper:
 @article{van_Aken_2020,
    title={VisBERT: Hidden-State Visualizations for Transformers},
    author={van Aken, Betty and Winter, Benjamin and Löser, Alexander and Gers, Felix A.},
+   journal={WWW '20: Companion Proceedings of the Web Conference 2020},
+   publisher={ACM Press},
    year={2020}
 }
 ```
