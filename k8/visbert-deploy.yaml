@@ -1,21 +1,25 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: visbert
+  name: visbert-gpu
 spec:
-  replicas: 1
+  selector:
+    matchLabels:
+        app: visbert-gpu
+  strategy: 
+    type: Recreate
   template:
     metadata:
       labels:
-        app: visbert
+        app: visbert-gpu
     spec:
       containers:
-        - name: visbert
+        - name: visbert-gpu
           image: registry.datexis.com/bvanaken/visbert:v1.1
           command:
             - /bin/sh
             - "-c"
-            - "./start/container_start.sh"
+            - "sleep 1h"
           imagePullPolicy: Always
           ports:
             - name: client-port
@@ -28,7 +32,7 @@ spec:
             - name: visbert-models-pvc
               mountPath: /models_dir
       nodeSelector:
-        gpu: k80
+        gpu: p100
       imagePullSecrets:
         - name: private-registry-auth
       volumes:

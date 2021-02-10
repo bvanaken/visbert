@@ -1,3 +1,4 @@
+import torch
 from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
 import waitress
 
@@ -77,20 +78,30 @@ def generate_model_output(sample, model_name):
     # build pca-layer list from hidden states
     tokens = features.tokens
     layers = []
-    for layer in hidden_states:
 
-        # cut off padding
-        token_vectors = layer[0][:len(tokens)]
+    token_vectors = [layer[0][:len(tokens)] for layer in hidden_states]
 
-        # dimensionality reduction
-        layer_reduced = visualize.reduce(token_vectors, "pca", 2)
+    flat_list = torch.cat(token_vectors)
+    # flat_list = [item for sublist in token_vectors for item in sublist]
+    layer_reduced = visualize.reduce(flat_list, "pca", 2)
+
+    for i, layer in enumerate(hidden_states):
+
+        # # cut off padding
+        # token_vectors = layer[0][:len(tokens)]
+        #
+        # # dimensionality reduction
+        # layer_reduced = visualize.reduce(token_vectors, "pca", 2)
+
+        pca_result_x = layer_reduced[0][len(tokens) * i:len(tokens) * i + len(tokens)]
+        pca_result_y = layer_reduced[1][len(tokens) * i:len(tokens) * i + len(tokens)]
 
         # build json with point information
         points = []
-        for i, val in enumerate(layer_reduced[0]):
+        for i, val in enumerate(pca_result_x):
             point = {
                 'x': val,
-                'y': layer_reduced[1][i],
+                'y': pca_result_y[i],
                 'label': tokens[i]
             }
 
