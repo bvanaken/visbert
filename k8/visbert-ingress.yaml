@@ -1,22 +1,20 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: visbert-ingress
-  labels:
-    app: visbert-ingress
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    certmanager.k8s.io/cluster-issuer: letsencrypt
+ name: visbert-demo
+ annotations:
+   cert-manager.io/cluster-issuer: letsencrypt
+   kubernetes.io/ingress.class: nginx
 spec:
-  tls:
-  - secretName: "apps-subdomain-tls"
-    hosts:
-    - "apps.datexis.com"
-  rules:
-  - host: "apps.datexis.com"
-    http:
-      paths:
-      - path: /visbert
-        backend:
-          serviceName: visbert
-          servicePort: 1337
+ tls:
+ - secretName: "visbert-demo-subdomain-tls"
+   hosts:
+   - "visbert.demo.datexis.com"
+ rules:
+ - host: "visbert.demo.datexis.com"
+   http:
+     paths:
+     - path:
+       backend:
+         serviceName: visbert
+         servicePort: 1337
