@@ -82,16 +82,9 @@ def generate_model_output(sample, model_name):
     token_vectors = [layer[0][:len(tokens)] for layer in hidden_states]
 
     flat_list = torch.cat(token_vectors)
-    # flat_list = [item for sublist in token_vectors for item in sublist]
     layer_reduced = visualize.reduce(flat_list, "pca", 2)
 
     for i, layer in enumerate(hidden_states):
-
-        # # cut off padding
-        # token_vectors = layer[0][:len(tokens)]
-        #
-        # # dimensionality reduction
-        # layer_reduced = visualize.reduce(token_vectors, "pca", 2)
 
         pca_result_x = layer_reduced[0][len(tokens) * i:len(tokens) * i + len(tokens)]
         pca_result_y = layer_reduced[1][len(tokens) * i:len(tokens) * i + len(tokens)]
