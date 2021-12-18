@@ -66,6 +66,7 @@ def initialize_dropdown():
 
 @app.route(base_route + "/predict", methods=['POST'])
 def get_output():
+    print(' I am the new change')
     data = request.get_json()
     input_sample = data["sample"]
     model_name = data["model"]
