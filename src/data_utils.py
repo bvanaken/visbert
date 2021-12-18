@@ -16,13 +16,17 @@
 """ Load SQuAD dataset. """
 
 from __future__ import absolute_import, division, print_function
-
+from typing import List, Dict
 import logging
 import math
 import collections
 import re
+from torch import nn
+import torch
+import numpy as np
 from nltk import tokenize
 from pytorch_transformers.tokenization_bert import BasicTokenizer, whitespace_tokenize
+from transformers import BertModel
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +93,9 @@ class InputFeatures(object):
                  paragraph_len,
                  sup_ids=None,
                  start_position=None,
+                 
+                 
+                 
                  end_position=None,
                  is_impossible=None):
         self.unique_id = unique_id
@@ -108,268 +115,543 @@ class InputFeatures(object):
         self.end_position = end_position
         self.is_impossible = is_impossible
 
+class NERSample:
+    # def __init__(self, sample_id: str, sentence: List, sentence_labels: List,  labels: List, ner_labels: List):
+    def __init__(self, sample_id: str, sentence: List, sentence_labels: List, labels: List, mode: str):
+        self.sample_id = sample_id
+        self.sentence = sentence
+        self.sentence_labels = sentence_labels
+        self.labels = labels
+        self.mode = mode
 
-def read_squad_example(example):
-    def is_whitespace(c):
-        if c == " " or c == "\t" or c == "\r" or c == "\n" or ord(c) == 0x202F:
-            return True
-        return False
+class NERInputFeatures(object):
+    """A single set of features of data."""
 
-    paragraph_text = example["context"]
-    doc_tokens = []
-    char_to_word_offset = []
-    prev_is_whitespace = True
-    for c in paragraph_text:
-        if is_whitespace(c):
-            prev_is_whitespace = True
-        else:
-            if prev_is_whitespace:
-                doc_tokens.append(c)
-            else:
-                doc_tokens[-1] += c
-            prev_is_whitespace = False
-        char_to_word_offset.append(len(doc_tokens) - 1)
+    def __init__(self,
+                 input_ids,
+                 attention_mask,
+                 token_type_ids,
+                 labels,
+                 words,
+                 tokens,
+                 annotated_tokens,
+                 ner_labels,
+                 label_map,
+                 inv_label_map):
+        self.input_ids = input_ids
+        self.attention_mask = attention_mask
+        self.token_type_ids = token_type_ids
+        self.labels = labels
+        self.words = words
+        self.tokens = tokens
+        self.annotated_tokens = annotated_tokens
+        self.ner_labels = ner_labels
+        self.label_map = label_map
+        self.inv_label_map = inv_label_map
 
-    qas_id = example["id"]
-    question_text = example["question"]
-    sup_ids = example["sup_ids"]
-    sup_token_pos_ids = []
+class SCDataset(object):
+    # def __init__(self, texts, tags, label_list, preprocessor, preprocess, tokenizer):
+    def __init__(self, texts, tags, preprocessor, preprocess, tokenizer):
 
-    answer = example["answer"]
-    orig_answer_text = answer["text"]
-    answer_offset = answer["answer_start"]
-    answer_length = len(orig_answer_text)
-    start_position = char_to_word_offset[answer_offset]
-    end_position = char_to_word_offset[answer_offset + answer_length - 1]
+        self.texts = texts
+        self.tags = tags
+        self.ner_labels = ["B-LOC", "O", "B-ORG", "I-ORG", "B-PERS", "I-PERS", "I-LOC", "B-MISC", "I-MISC"]
+        self.label_map = {label: i for i, label in enumerate(self.ner_labels)}
+        self.inv_label_map = {i: label for i, label in enumerate(self.ner_labels)}
+        self.preprocessor = preprocessor
+        self.pad_token_label_id = nn.CrossEntropyLoss().ignore_index
+        self.preprocess = preprocess
+        self.TOKENIZER = tokenizer
+        self.MAX_SEQ_LEN = 256
+        # Use cross entropy ignore_index as padding label id so that only
+        # real label ids contribute to the loss later.
 
-    if sup_ids:
-        for sup in sup_ids:
-            sup_start_position = char_to_word_offset[sup[0]]
-            sup_end_position = char_to_word_offset[sup[1] - 1]
-            sup_token_pos_ids.append((sup_start_position, sup_end_position))
-
-    # Only add answers where the text can be exactly recovered from the
-    # document. If this CAN'T happen it's likely due to weird Unicode
-    # stuff so we will just skip the example.
+    # def __len__(self):
+    #     return len(self.texts)
     #
-    # Note that this means for training mode, every example is NOT
-    # guaranteed to be preserved.
-    actual_text = " ".join(doc_tokens[start_position:(end_position + 1)])
-    cleaned_answer_text = " ".join(
-        whitespace_tokenize(orig_answer_text))
-    if actual_text.find(cleaned_answer_text) == -1:
-        logger.warning("Could not find answer: '%s' vs. '%s'",
-                       actual_text, cleaned_answer_text)
+    def __getitem__(self, item):
+        textlist = self.texts[item]
+        tags = self.tags[item]
+        # textlist = self.texts
+        # tags = self.tags
 
-    return SquadExample(
-        qas_id=qas_id,
-        question_text=question_text,
-        doc_tokens=doc_tokens,
-        orig_answer_text=orig_answer_text,
-        start_position=start_position,
-        end_position=end_position,
-        sup_ids=sup_token_pos_ids)
-
-
-def convert_example_to_features(example, tokenizer, max_seq_length,
-                                doc_stride, max_query_length, is_training,
-                                cls_token_at_end=False,
-                                cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
-                                sequence_a_segment_id=0, sequence_b_segment_id=1,
-                                cls_token_segment_id=0, pad_token_segment_id=0,
-                                mask_padding_with_zero=True):
-    """Loads a data file into a list of `InputBatch`s."""
-
-    unique_id = 1000000000
-
-    query_tokens = tokenizer.tokenize(example.question_text)
-
-    if len(query_tokens) > max_query_length:
-        query_tokens = query_tokens[0:max_query_length]
-
-    tok_to_orig_index = []
-    orig_to_tok_index = []
-    all_doc_tokens = []
-    for (i, token) in enumerate(example.doc_tokens):
-        orig_to_tok_index.append(len(all_doc_tokens))
-        sub_tokens = tokenizer.tokenize(token)
-        for sub_token in sub_tokens:
-            tok_to_orig_index.append(i)
-            all_doc_tokens.append(sub_token)
-
-    # Get token position for answer span
-    tok_start_position = orig_to_tok_index[example.start_position]
-    if example.end_position < len(example.doc_tokens) - 1:
-        tok_end_position = orig_to_tok_index[example.end_position + 1] - 1
-    else:
-        tok_end_position = len(all_doc_tokens) - 1
-    (tok_start_position, tok_end_position) = _improve_answer_span(
-        all_doc_tokens, tok_start_position, tok_end_position, tokenizer,
-        example.orig_answer_text)
-
-    # The -3 accounts for [CLS], [SEP] and [SEP]
-    max_tokens_for_doc = max_seq_length - len(query_tokens) - 3
-
-    # We can have documents that are longer than the maximum sequence length.
-    # To deal with this we do a sliding window approach, where we take chunks
-    # of the up to our max length with a stride of `doc_stride`.
-    _DocSpan = collections.namedtuple(  # pylint: disable=invalid-name
-        "DocSpan", ["start", "length"])
-    doc_spans = []
-    start_offset = 0
-    while start_offset < len(all_doc_tokens):
-        length = len(all_doc_tokens) - start_offset
-        if length > max_tokens_for_doc:
-            length = max_tokens_for_doc
-        doc_spans.append(_DocSpan(start=start_offset, length=length))
-        if start_offset + length == len(all_doc_tokens):
-            break
-        start_offset += min(length, doc_stride)
-
-    for (doc_span_index, doc_span) in enumerate(doc_spans):
         tokens = []
-        token_to_orig_map = {}
-        token_is_max_context = {}
-        segment_ids = []
+        annotated_tokens = []
+        label_ids = []
+        for indx, (word, label) in enumerate(zip(textlist, tags)):
+            if self.preprocess:
+                if word == '[MASK]':
+                    clean_word = word
+                else:
+                    clean_word = self.preprocessor.preprocess(word)
+                word_tokens = self.TOKENIZER.tokenize(clean_word)
+                annotated_word_tokens = [f'{token}_{indx}_{label}' if i == 0 else f'{token}_{indx}_-100' for i, token in enumerate(word_tokens)]
+            else:
+                word_tokens = self.TOKENIZER.tokenize(word)
+                annotated_word_tokens = [f'{token}_{indx}_{label}' if i == 0 else f'{token}_{indx}_-100' for i, token in enumerate(word_tokens)]
+                # ignore words that are preprocessed because the preprocessor return '' and the tokeniser replace that with empty list which gets ignored here
+            if len(word_tokens) > 0:
+                tokens.extend(word_tokens)
+                annotated_tokens.extend(annotated_word_tokens)
+                # Use the real label id for the first token of the word, and padding ids for the remaining tokens
+                # if len(word_tokens) > 1:
+                    # tags = [self.pad_token_label_id] * (len(word_tokens))
+                    # tags[identify_bigger(word_tokens)] = self.label_map[label]
+                    # label_ids.extend(tags)
+                label_ids.extend([self.label_map[label]] + [self.pad_token_label_id] * (len(word_tokens) - 1))
+                # else:
+                #     label_ids.extend([self.label_map[label]] + [self.pad_token_label_id] * (len(word_tokens) - 1))
 
-        # p_mask: mask with 1 for token than cannot be in the answer (0 for token which can be in an answer)
-        # Original TF implem also keep the classification token (set to 0) (not sure why...)
-        p_mask = []
+        # Account for [CLS] and [SEP] with "- 2" and with "- 3" for RoBERTa.
+        special_tokens_count = self.TOKENIZER.num_special_tokens_to_add()
+        if len(tokens) > self.MAX_SEQ_LEN - special_tokens_count:
+            tokens = tokens[: (self.MAX_SEQ_LEN - special_tokens_count)]
+            annotated_tokens = annotated_tokens[: (self.MAX_SEQ_LEN - special_tokens_count)]
+            label_ids = label_ids[: (self.MAX_SEQ_LEN - special_tokens_count)]
 
-        # CLS token at the beginning
-        if not cls_token_at_end:
-            tokens.append(cls_token)
-            segment_ids.append(cls_token_segment_id)
-            p_mask.append(0)
-            cls_index = 0
+        # Add the [SEP] token
+        tokens += [self.TOKENIZER.sep_token]
+        annotated_tokens += [self.TOKENIZER.sep_token]
+        label_ids += [self.pad_token_label_id]
+        token_type_ids = [0] * len(tokens)
 
-        # Query
-        for token in query_tokens:
-            tokens.append(token)
-            segment_ids.append(sequence_a_segment_id)
-            p_mask.append(1)
+        # Add the [CLS] TOKEN
+        tokens = [self.TOKENIZER.cls_token] + tokens
+        annotated_tokens = [self.TOKENIZER.cls_token] + annotated_tokens
+        label_ids = [self.pad_token_label_id] + label_ids
+        token_type_ids = [0] + token_type_ids
 
-        # SEP token
-        tokens.append(sep_token)
-        segment_ids.append(sequence_a_segment_id)
-        p_mask.append(1)
-
-        # Paragraph
-        for i in range(doc_span.length):
-            split_token_index = doc_span.start + i
-            token_to_orig_map[len(tokens)] = tok_to_orig_index[split_token_index]
-
-            is_max_context = _check_is_max_context(doc_spans, doc_span_index,
-                                                   split_token_index)
-            token_is_max_context[len(tokens)] = is_max_context
-            tokens.append(all_doc_tokens[split_token_index])
-            segment_ids.append(sequence_b_segment_id)
-            p_mask.append(0)
-        paragraph_len = doc_span.length
-
-        # SEP token
-        tokens.append(sep_token)
-        segment_ids.append(sequence_b_segment_id)
-        p_mask.append(1)
-
-        # CLS token at the end
-        if cls_token_at_end:
-            tokens.append(cls_token)
-            segment_ids.append(cls_token_segment_id)
-            p_mask.append(0)
-            cls_index = len(tokens) - 1  # Index of classification token
-
-        input_ids = tokenizer.convert_tokens_to_ids(tokens)
+        input_ids = self.TOKENIZER.convert_tokens_to_ids(tokens)
 
         # The mask has 1 for real tokens and 0 for padding tokens. Only real
         # tokens are attended to.
-        input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
+        attention_mask = [1] * len(input_ids)
 
         # Zero-pad up to the sequence length.
-        while len(input_ids) < max_seq_length:
-            input_ids.append(pad_token)
-            input_mask.append(0 if mask_padding_with_zero else 1)
-            segment_ids.append(pad_token_segment_id)
-            p_mask.append(1)
+        padding_length = self.MAX_SEQ_LEN - len(input_ids)
 
-        assert len(input_ids) == max_seq_length
-        assert len(input_mask) == max_seq_length
-        assert len(segment_ids) == max_seq_length
+        input_ids += [self.TOKENIZER.pad_token_id] * padding_length
+        attention_mask += [0] * padding_length
+        token_type_ids += [0] * padding_length
+        label_ids += [self.pad_token_label_id] * padding_length
 
-        span_is_impossible = example.is_impossible
-        start_position = None
-        end_position = None
-        sup_ids = []
+        assert len(input_ids) == self.MAX_SEQ_LEN
+        assert len(attention_mask) == self.MAX_SEQ_LEN
+        assert len(token_type_ids) == self.MAX_SEQ_LEN
+        assert len(label_ids) == self.MAX_SEQ_LEN
 
-        if not span_is_impossible:
-            # For training, if our document chunk does not contain an annotation
-            # we throw it out, since there is nothing to predict.
-            doc_start = doc_span.start
-            doc_end = doc_span.start + doc_span.length - 1
-            out_of_span = False
-            if not (tok_start_position >= doc_start and
-                    tok_end_position <= doc_end):
-                out_of_span = True
-            if out_of_span:
-                start_position = 0
-                end_position = 0
-                span_is_impossible = True
+
+        return NERInputFeatures(torch.tensor(input_ids, dtype=torch.long)[None, :],
+                         torch.tensor(attention_mask, dtype=torch.long)[None, :],
+                         torch.tensor(token_type_ids, dtype=torch.long)[None, :],
+                         torch.tensor(label_ids, dtype=torch.long)[None, :],
+                         np.array(textlist),
+                         np.array(tokens),
+                         np.array(annotated_tokens),
+                         self.ner_labels,
+                         self.label_map,
+                         self.inv_label_map)
+
+
+class SecondSCDataset:
+    def __init__(self, texts, tags, preprocessor, preprocess, tokenizer):
+
+        self.texts = texts
+        self.tags = tags
+        self.ner_labels = ["B-LOC", "O", "B-ORG", "I-ORG", "B-PERS", "I-PERS", "I-LOC", "B-MISC", "I-MISC"]
+        self.label_map = {label: i for i, label in enumerate(self.ner_labels)}
+        self.inv_label_map = {i: label for i, label in enumerate(self.ner_labels)}
+        self.preprocessor = preprocessor
+        self.pad_token_label_id = nn.CrossEntropyLoss().ignore_index
+        self.preprocess = preprocess
+        self.TOKENIZER = tokenizer
+        self.MAX_SEQ_LEN = 256
+
+    def __len__(self):
+        return len(self.texts)
+
+    def __getitem__(self, item):
+        textlist = self.texts[item]
+        tags = self.tags[item]
+
+        tokens = []
+        annotated_tokens = []
+        label_ids = []
+        for indx, (word, label) in enumerate(zip(textlist, tags)):
+            if self.preprocess:
+                if word == '[MASK]':
+                    clean_word = word
+                else:
+                    clean_word = self.preprocessor.preprocess(word)
+                    word_tokens = self.TOKENIZER.tokenize(clean_word)
+                    if len(word_tokens) > 1:
+                        annotated_word_tokens = [f'{token}_{indx}_{label}' if i == 1 else f'{token}_{indx}_-100' for
+                                             i, token in enumerate(word_tokens)]
+                    else:
+                        annotated_word_tokens = [f'{token}_{indx}_{label}' if i == 0 else f'{token}_{indx}_-100' for
+                                                 i, token in enumerate(word_tokens)]
+
             else:
-                doc_offset = len(query_tokens) + 2
-                start_position = tok_start_position - doc_start + doc_offset
-                end_position = tok_end_position - doc_start + doc_offset
+                word_tokens = self.TOKENIZER.tokenize(word)
+                annotated_word_tokens = [f'{token}_{indx}_{label}' if i == 1 else f'{token}_{indx}_-100' for i, token in
+                                         enumerate(word_tokens)]
+                # ignore words that are preprocessed because the preprocessor return '' and the tokeniser replace that with empty list which gets ignored here
+            if len(word_tokens) > 0:
+                tokens.extend(word_tokens)
+                annotated_tokens.extend(annotated_word_tokens)
+                # Use the real label id for the first token of the word, and padding ids for the remaining tokens
+                if len(word_tokens) > 1:
+                    label_ids.extend([self.pad_token_label_id] + [self.label_map[label]] + [self.pad_token_label_id] * (
+                                len(word_tokens) - 2))
+                else:
+                    label_ids.extend([self.label_map[label]] + [self.pad_token_label_id] * (len(word_tokens) - 1))
 
-                # Get token position for supporting fact spans
-                for sup in example.sup_ids:
-                    sup_tok_start_position = orig_to_tok_index[sup[0]] - doc_start + doc_offset
-                    sup_tok_end_position = orig_to_tok_index[sup[1]] - doc_start + doc_offset
+        # Account for [CLS] and [SEP] with "- 2" and with "- 3" for RoBERTa.
+        special_tokens_count = self.TOKENIZER.num_special_tokens_to_add()
+        if len(tokens) > self.MAX_SEQ_LEN - special_tokens_count:
+            tokens = tokens[: (self.MAX_SEQ_LEN - special_tokens_count)]
+            annotated_tokens = annotated_tokens[: (self.MAX_SEQ_LEN - special_tokens_count)]
+            label_ids = label_ids[: (self.MAX_SEQ_LEN - special_tokens_count)]
 
-                    sup_ids.append((sup_tok_start_position, sup_tok_end_position))
+        # Add the [SEP] token
+        tokens += [self.TOKENIZER.sep_token]
+        annotated_tokens += [self.TOKENIZER.sep_token]
+        label_ids += [self.pad_token_label_id]
+        token_type_ids = [0] * len(tokens)
 
-        if span_is_impossible:
-            start_position = cls_index
-            end_position = cls_index
+        # Add the [CLS] TOKEN
+        tokens = [self.TOKENIZER.cls_token] + tokens
+        annotated_tokens = [self.TOKENIZER.cls_token] + annotated_tokens
+        label_ids = [self.pad_token_label_id] + label_ids
+        token_type_ids = [0] + token_type_ids
 
-        logger.info("*** Example ***")
-        logger.info("unique_id: %s" % (unique_id))
-        logger.info("doc_span_index: %s" % (doc_span_index))
-        logger.info("tokens: %s" % " ".join(tokens))
-        logger.info("token_to_orig_map: %s" % " ".join([
-            "%d:%d" % (x, y) for (x, y) in token_to_orig_map.items()]))
-        logger.info("token_is_max_context: %s" % " ".join([
-            "%d:%s" % (x, y) for (x, y) in token_is_max_context.items()
-        ]))
-        logger.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-        logger.info(
-            "input_mask: %s" % " ".join([str(x) for x in input_mask]))
-        logger.info(
-            "segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-        if span_is_impossible:
-            logger.info("impossible example")
-        if not span_is_impossible:
-            answer_text = " ".join(tokens[start_position:(end_position + 1)])
-            logger.info("start_position: %d" % (start_position))
-            logger.info("end_position: %d" % (end_position))
-            logger.info(
-                "answer: %s" % (answer_text))
+        input_ids = self.TOKENIZER.convert_tokens_to_ids(tokens)
 
-        return InputFeatures(
-            unique_id=unique_id,
-            example_index=0,
-            doc_span_index=doc_span_index,
-            tokens=tokens,
-            token_to_orig_map=token_to_orig_map,
-            token_is_max_context=token_is_max_context,
-            input_ids=input_ids,
-            input_mask=input_mask,
-            segment_ids=segment_ids,
-            cls_index=cls_index,
-            p_mask=p_mask,
-            paragraph_len=paragraph_len,
-            start_position=start_position,
-            end_position=end_position,
-            sup_ids=sup_ids,
-            is_impossible=span_is_impossible)
+        # The mask has 1 for real tokens and 0 for padding tokens. Only real
+        # tokens are attended to.
+        attention_mask = [1] * len(input_ids)
+
+        # Zero-pad up to the sequence length.
+        padding_length = self.MAX_SEQ_LEN - len(input_ids)
+
+        input_ids += [self.TOKENIZER.pad_token_id] * padding_length
+        attention_mask += [0] * padding_length
+        token_type_ids += [0] * padding_length
+        label_ids += [self.pad_token_label_id] * padding_length
+
+        # assert len(input_ids) == MAX_SEQ_LEN
+        # assert len(attention_mask) == MAX_SEQ_LEN
+        # assert len(token_type_ids) == MAX_SEQ_LEN
+        # assert len(label_ids) == MAX_SEQ_LEN
+
+        return NERInputFeatures(torch.tensor(input_ids, dtype=torch.long)[None, :],
+                                torch.tensor(attention_mask, dtype=torch.long)[None, :],
+                                torch.tensor(token_type_ids, dtype=torch.long)[None, :],
+                                torch.tensor(label_ids, dtype=torch.long)[None, :],
+                                np.array(textlist),
+                                np.array(tokens),
+                                np.array(annotated_tokens),
+                                self.ner_labels,
+                                self.label_map,
+                                self.inv_label_map)
+
+class SCModel(nn.Module):
+    def __init__(self, num_tag, path):
+        super(SCModel, self).__init__()
+        self.num_tag = num_tag
+        self.bert = BertModel.from_pretrained(path, output_attentions=True, output_hidden_states=True)
+        self.bert_drop = nn.Dropout(0.3)
+        self.out_tag = nn.Linear(self.bert.config.hidden_size, self.num_tag)
+
+    def forward(self, input_ids, attention_mask, token_type_ids):
+        output = self.bert(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids,
+                           output_attentions=True, output_hidden_states=True)
+        bo_tag = self.bert_drop(output['last_hidden_state'])
+        logits = self.out_tag(bo_tag)
+        return logits
+
+def align_predictions(predictions, label_ids, inv_label_map):
+    preds = np.argmax(predictions, axis=2)
+
+    batch_size, seq_len = preds.shape
+
+    out_label_list = [[] for _ in range(batch_size)]
+    preds_list = [[] for _ in range(batch_size)]
+
+    for i in range(batch_size):
+        for j in range(seq_len):
+            if label_ids[i, j] != nn.CrossEntropyLoss().ignore_index:
+                out_label_list[i].append(inv_label_map[label_ids[i][j]])
+                # preds_list[i].append(f"{inv_label_map[preds[i][j]]}: {max(predictions[i, j]):.2f}")
+                # preds_list[i].append((inv_label_map[preds[i][j]], str(max(predictions[i, j]))))
+                preds_list[i].append((inv_label_map[preds[i][j]], max(predictions[i, j].tolist())))
+    return out_label_list, preds_list
+
+
+
+
+
+# def read_squad_example(example):
+#     def is_whitespace(c):
+#         if c == " " or c == "\t" or c == "\r" or c == "\n" or ord(c) == 0x202F:
+#             return True
+#         return False
+#
+#     paragraph_text = example["context"]
+#     doc_tokens = []
+#     char_to_word_offset = []
+#     prev_is_whitespace = True
+#     for c in paragraph_text:
+#         if is_whitespace(c):
+#             prev_is_whitespace = True
+#         else:
+#             if prev_is_whitespace:
+#                 doc_tokens.append(c)
+#             else:
+#                 doc_tokens[-1] += c
+#             prev_is_whitespace = False
+#         char_to_word_offset.append(len(doc_tokens) - 1)
+#
+#     qas_id = example["id"]
+#     question_text = example["question"]
+#     sup_ids = example["sup_ids"]
+#     sup_token_pos_ids = []
+#
+#     answer = example["answer"]
+#     orig_answer_text = answer["text"]
+#     answer_offset = answer["answer_start"]
+#     answer_length = len(orig_answer_text)
+#     start_position = char_to_word_offset[answer_offset]
+#     end_position = char_to_word_offset[answer_offset + answer_length - 1]
+#
+#     if sup_ids:
+#         for sup in sup_ids:
+#             sup_start_position = char_to_word_offset[sup[0]]
+#             sup_end_position = char_to_word_offset[sup[1] - 1]
+#             sup_token_pos_ids.append((sup_start_position, sup_end_position))
+#
+#     # Only add answers where the text can be exactly recovered from the
+#     # document. If this CAN'T happen it's likely due to weird Unicode
+#     # stuff so we will just skip the example.
+#     #
+#     # Note that this means for training mode, every example is NOT
+#     # guaranteed to be preserved.
+#     actual_text = " ".join(doc_tokens[start_position:(end_position + 1)])
+#     cleaned_answer_text = " ".join(
+#         whitespace_tokenize(orig_answer_text))
+#     if actual_text.find(cleaned_answer_text) == -1:
+#         logger.warning("Could not find answer: '%s' vs. '%s'",
+#                        actual_text, cleaned_answer_text)
+#
+#     return SquadExample(
+#         qas_id=qas_id,
+#         question_text=question_text,
+#         doc_tokens=doc_tokens,
+#         orig_answer_text=orig_answer_text,
+#         start_position=start_position,
+#         end_position=end_position,
+#         sup_ids=sup_token_pos_ids)
+#
+
+# def convert_example_to_features(example, tokenizer, max_seq_length,
+#                                 doc_stride, max_query_length, is_training,
+#                                 cls_token_at_end=False,
+#                                 cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
+#                                 sequence_a_segment_id=0, sequence_b_segment_id=1,
+#                                 cls_token_segment_id=0, pad_token_segment_id=0,
+#                                 mask_padding_with_zero=True):
+#     """Loads a data file into a list of `InputBatch`s."""
+#
+#     unique_id = 1000000000
+#
+#     query_tokens = tokenizer.tokenize(example.question_text)
+#
+#     if len(query_tokens) > max_query_length:
+#         query_tokens = query_tokens[0:max_query_length]
+#
+#     tok_to_orig_index = []
+#     orig_to_tok_index = []
+#     all_doc_tokens = []
+#     for (i, token) in enumerate(example.doc_tokens):
+#         orig_to_tok_index.append(len(all_doc_tokens))
+#         sub_tokens = tokenizer.tokenize(token)
+#         for sub_token in sub_tokens:
+#             tok_to_orig_index.append(i)
+#             all_doc_tokens.append(sub_token)
+#
+#     # Get token position for answer span
+#     tok_start_position = orig_to_tok_index[example.start_position]
+#     if example.end_position < len(example.doc_tokens) - 1:
+#         tok_end_position = orig_to_tok_index[example.end_position + 1] - 1
+#     else:
+#         tok_end_position = len(all_doc_tokens) - 1
+#     (tok_start_position, tok_end_position) = _improve_answer_span(
+#         all_doc_tokens, tok_start_position, tok_end_position, tokenizer,
+#         example.orig_answer_text)
+#
+#     # The -3 accounts for [CLS], [SEP] and [SEP]
+#     max_tokens_for_doc = max_seq_length - len(query_tokens) - 3
+#
+#     # We can have documents that are longer than the maximum sequence length.
+#     # To deal with this we do a sliding window approach, where we take chunks
+#     # of the up to our max length with a stride of `doc_stride`.
+#     _DocSpan = collections.namedtuple(  # pylint: disable=invalid-name
+#         "DocSpan", ["start", "length"])
+#     doc_spans = []
+#     start_offset = 0
+#     while start_offset < len(all_doc_tokens):
+#         length = len(all_doc_tokens) - start_offset
+#         if length > max_tokens_for_doc:
+#             length = max_tokens_for_doc
+#         doc_spans.append(_DocSpan(start=start_offset, length=length))
+#         if start_offset + length == len(all_doc_tokens):
+#             break
+#         start_offset += min(length, doc_stride)
+#
+#     for (doc_span_index, doc_span) in enumerate(doc_spans):
+#         tokens = []
+#         token_to_orig_map = {}
+#         token_is_max_context = {}
+#         segment_ids = []
+#
+#         # p_mask: mask with 1 for token than cannot be in the answer (0 for token which can be in an answer)
+#         # Original TF implem also keep the classification token (set to 0) (not sure why...)
+#         p_mask = []
+#
+#         # CLS token at the beginning
+#         if not cls_token_at_end:
+#             tokens.append(cls_token)
+#             segment_ids.append(cls_token_segment_id)
+#             p_mask.append(0)
+#             cls_index = 0
+#
+#         # Query
+#         for token in query_tokens:
+#             tokens.append(token)
+#             segment_ids.append(sequence_a_segment_id)
+#             p_mask.append(1)
+#
+#         # SEP token
+#         tokens.append(sep_token)
+#         segment_ids.append(sequence_a_segment_id)
+#         p_mask.append(1)
+#
+#         # Paragraph
+#         for i in range(doc_span.length):
+#             split_token_index = doc_span.start + i
+#             token_to_orig_map[len(tokens)] = tok_to_orig_index[split_token_index]
+#
+#             is_max_context = _check_is_max_context(doc_spans, doc_span_index,
+#                                                    split_token_index)
+#             token_is_max_context[len(tokens)] = is_max_context
+#             tokens.append(all_doc_tokens[split_token_index])
+#             segment_ids.append(sequence_b_segment_id)
+#             p_mask.append(0)
+#         paragraph_len = doc_span.length
+#
+#         # SEP token
+#         tokens.append(sep_token)
+#         segment_ids.append(sequence_b_segment_id)
+#         p_mask.append(1)
+#
+#         # CLS token at the end
+#         if cls_token_at_end:
+#             tokens.append(cls_token)
+#             segment_ids.append(cls_token_segment_id)
+#             p_mask.append(0)
+#             cls_index = len(tokens) - 1  # Index of classification token
+#
+#         input_ids = tokenizer.convert_tokens_to_ids(tokens)
+#
+#         # The mask has 1 for real tokens and 0 for padding tokens. Only real
+#         # tokens are attended to.
+#         input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
+#
+#         # Zero-pad up to the sequence length.
+#         while len(input_ids) < max_seq_length:
+#             input_ids.append(pad_token)
+#             input_mask.append(0 if mask_padding_with_zero else 1)
+#             segment_ids.append(pad_token_segment_id)
+#             p_mask.append(1)
+#
+#         assert len(input_ids) == max_seq_length
+#         assert len(input_mask) == max_seq_length
+#         assert len(segment_ids) == max_seq_length
+#
+#         span_is_impossible = example.is_impossible
+#         start_position = None
+#         end_position = None
+#         sup_ids = []
+#
+#         if not span_is_impossible:
+#             # For training, if our document chunk does not contain an annotation
+#             # we throw it out, since there is nothing to predict.
+#             doc_start = doc_span.start
+#             doc_end = doc_span.start + doc_span.length - 1
+#             out_of_span = False
+#             if not (tok_start_position >= doc_start and
+#                     tok_end_position <= doc_end):
+#                 out_of_span = True
+#             if out_of_span:
+#                 start_position = 0
+#                 end_position = 0
+#                 span_is_impossible = True
+#             else:
+#                 doc_offset = len(query_tokens) + 2
+#                 start_position = tok_start_position - doc_start + doc_offset
+#                 end_position = tok_end_position - doc_start + doc_offset
+#
+#                 # Get token position for supporting fact spans
+#                 for sup in example.sup_ids:
+#                     sup_tok_start_position = orig_to_tok_index[sup[0]] - doc_start + doc_offset
+#                     sup_tok_end_position = orig_to_tok_index[sup[1]] - doc_start + doc_offset
+#
+#                     sup_ids.append((sup_tok_start_position, sup_tok_end_position))
+#
+#         if span_is_impossible:
+#             start_position = cls_index
+#             end_position = cls_index
+#
+#         logger.info("*** Example ***")
+#         logger.info("unique_id: %s" % (unique_id))
+#         logger.info("doc_span_index: %s" % (doc_span_index))
+#         logger.info("tokens: %s" % " ".join(tokens))
+#         logger.info("token_to_orig_map: %s" % " ".join([
+#             "%d:%d" % (x, y) for (x, y) in token_to_orig_map.items()]))
+#         logger.info("token_is_max_context: %s" % " ".join([
+#             "%d:%s" % (x, y) for (x, y) in token_is_max_context.items()
+#         ]))
+#         logger.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
+#         logger.info(
+#             "input_mask: %s" % " ".join([str(x) for x in input_mask]))
+#         logger.info(
+#             "segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
+#         if span_is_impossible:
+#             logger.info("impossible example")
+#         if not span_is_impossible:
+#             answer_text = " ".join(tokens[start_position:(end_position + 1)])
+#             logger.info("start_position: %d" % (start_position))
+#             logger.info("end_position: %d" % (end_position))
+#             logger.info(
+#                 "answer: %s" % (answer_text))
+#
+#         return InputFeatures(
+#             unique_id=unique_id,
+#             example_index=0,
+#             doc_span_index=doc_span_index,
+#             tokens=tokens,
+#             token_to_orig_map=token_to_orig_map,
+#             token_is_max_context=token_is_max_context,
+#             input_ids=input_ids,
+#             input_mask=input_mask,
+#             segment_ids=segment_ids,
+#             cls_index=cls_index,
+#             p_mask=p_mask,
+#             paragraph_len=paragraph_len,
+#             start_position=start_position,
+#             end_position=end_position,
+#             sup_ids=sup_ids,
+#             is_impossible=span_is_impossible)
 
 
 def split_into_sentences(text):

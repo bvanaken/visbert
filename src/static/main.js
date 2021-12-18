@@ -1,4 +1,4 @@
-var squadExampleFile = "./static/squad_examples.json";
+var testing_data = "./static/testing_data.json";
 var hotpotExampleFile = "./static/hotpot_examples.json";
 var babiExampleFile = "./static/babi_examples.json";
 
@@ -17,20 +17,19 @@ var fontHighlighted = {
     size: 16,
     weight: 'bold'
 };
-
+// TODO Need to change this to match the previous approach, they provide this class as container and populate the data in refresh data function
 var scatterChartData = {
     datasets: [
         {
-            label: 'Context Tokens',
-            backgroundColor: color('darkcyan').alpha(0.2).rgbString(),
-            borderColor: color('darkcyan').alpha(0.6).rgbString(),
+            label: 'LOC',
+            backgroundColor: color('green').alpha(0.2).rgbString(),
             data: [],
             datalabels: {
                 font: fontDefault
             }
         },
         {
-            label: 'Supporting Facts',
+            label: 'ORG',
             data: [],
             backgroundColor: color('darkcyan').rgbString(),
             datalabels: {
@@ -38,15 +37,39 @@ var scatterChartData = {
             }
         },
         {
-            label: 'Question',
+            label: 'PERS',
             data: [],
-            backgroundColor: color('blue').rgbString(),
+            backgroundColor: color('deepskyblue').rgbString(),
             datalabels: {
-                font: fontBold
+                font: fontDefault
             }
         },
         {
-            label: 'Predicted Answer',
+            label: 'MISC',
+            data: [],
+            backgroundColor: color('palevioletred').rgbString(),
+            datalabels: {
+                font: fontDefault
+            }
+        },
+        {
+            label: 'OTHER',
+            data: [],
+            backgroundColor: color('saddlebrown').rgbString(),
+            datalabels: {
+                font: fontDefault
+            }
+        },
+        {
+            label: 'IGNORE',
+            data: [],
+            backgroundColor: color('grey').rgbString(),
+            datalabels: {
+                font: fontDefault
+            }
+        },
+        {
+            label: 'Focus',
             data: [],
             backgroundColor: color('purple').rgbString(),
             datalabels: {
@@ -56,11 +79,94 @@ var scatterChartData = {
     ]
 };
 
+
+var scatterChartHeadData = {
+    datasets: [
+        {
+            label: 'LOC',
+            backgroundColor: color('green').alpha(0.2).rgbString(),
+            data: [],
+            datalabels: {
+                font: fontDefault
+            }
+        },
+        {
+            label: 'ORG',
+            data: [],
+            backgroundColor: color('darkcyan').rgbString(),
+            datalabels: {
+                font: fontDefault
+            }
+        },
+        {
+            label: 'PERS',
+            data: [],
+            backgroundColor: color('deepskyblue').rgbString(),
+            datalabels: {
+                font: fontDefault
+            }
+        },
+        {
+            label: 'MISC',
+            data: [],
+            backgroundColor: color('palevioletred').rgbString(),
+            datalabels: {
+                font: fontDefault
+            }
+        },
+        {
+            label: 'OTHER',
+            data: [],
+            backgroundColor: color('saddlebrown').rgbString(),
+            datalabels: {
+                font: fontDefault
+            }
+        },
+        {
+            label: 'IGNORE',
+            data: [],
+            backgroundColor: color('grey').rgbString(),
+            datalabels: {
+                font: fontDefault
+            }
+        },
+        {
+            label: 'Focus',
+            data: [],
+            backgroundColor: color('purple').rgbString(),
+            datalabels: {
+                font: fontHighlighted
+            }
+        }
+    ]
+};
+
+var logitsData = {
+   data: {
+            labels: [],
+            datasets: [
+              {
+                label: "NER tags",
+                backgroundColor: ["green", "saddlebrown","darkcyan","darkcyan","deepskyblue", "deepskyblue", "green", "palevioletred", "palevioletred"],
+                data: []
+              }
+            ]
+ }};
+
+
+
+
+
+
+
+
+
+
 var phase1 = "Phase 1: Topical / Word Clusters";
 var phase2 = "Phase 2: Entity Relation Clusters";
 var phase3 = "Phase 3: Matching Supporting Facts with Question";
 var phase4 = "Phase 4: Answer Extraction";
-
+//TODO change these phases into something meaningful NE related
 var basePhaseLabels = {
     0: phase1,
     1: phase1,
@@ -76,66 +182,71 @@ var basePhaseLabels = {
     11: phase4,
     12: phase4
 };
-
-var largePhaseLabels = {
-    0: phase1,
-    1: phase1,
-    2: phase1,
-    3: phase1,
-    4: phase1,
-    5: phase1,
-    6: phase1 + " → " + phase2,
-    7: phase2,
-    8: phase2,
-    9: phase2,
-    10: phase2 + " → " + phase3,
-    11: phase3,
-    12: phase3,
-    13: phase3,
-    14: phase3,
-    15: phase3,
-    16: phase3,
-    17: phase3,
-    18: phase3 + " → " + phase4,
-    19: phase4,
-    20: phase4,
-    21: phase4,
-    22: phase4,
-    23: phase4,
-    24: phase4
-};
-
 var hiddenStates = [];
+var annotated_hiddenStates = [];
+var attention_head = [];
+var attention_heat;
+var change_heatmap;
+var predictedAnswer = [];
+var focus_data = [];
 var scatterPlot;
+var scatterHeadPlot;
 var tokenInfo = {};
 var currentTask = 'squad';
-var currentSups = null;
 var currentLayer = 0;
+var currentAttentionLayer = 0;
+var currentHeadLayer = 0;
+var currentAttentionHead = 0;
+var currentHead = 0;
 var ownExample = false;
+var predictedAnswer = [];
+var mistakes = [];
+var similarity_data = [];
+var head_similarity_data;
+var embedding_similarity = [];
+
 
 var tasks = {
     squad: {
-        file: squadExampleFile,
+        file: testing_data,
         samples: null,
         currentIndex: 0,
         layer_nr: 12,
+        attention_layer_nr: 11,
+        attention_head_nr: 11,
+
         phaseLabels: basePhaseLabels
     },
     babi: {
-        file: babiExampleFile,
+        file: testing_data,
         samples: null,
         currentIndex: 0,
         layer_nr: 12,
+        attention_layer_nr: 11,
+        attention_head_nr: 11,
         phaseLabels: basePhaseLabels
     },
     hotpot: {
-        file: hotpotExampleFile,
+        file: testing_data,
         samples: null,
         currentIndex: 0,
-        layer_nr: 24,
-        phaseLabels: largePhaseLabels
+        layer_nr: 12,
+        attention_layer_nr: 11,
+        attention_head_nr: 11,
+        phaseLabels: basePhaseLabels
+    },
+    v2SecondToken: {
+        file: testing_data,
+        samples: null,
+        currentIndex: 0,
+        layer_nr: 12,
+        attention_layer_nr: 11,
+        attention_head_nr: 11,
+        phaseLabels: basePhaseLabels
     }
 };
+
+var color_map = {"B-LOC": "green", "I-LOC":"green", "B-PERS":"deepskyblue","I-PERS":"deepskyblue","B-ORG":"darkcyan","I-ORG":"darkcyan","B-MISC":"palevioletred","I-MISC":"palevioletred","O":"saddlebrown"};
 
 function findMinMax(data) {
     var minX = 1000000000;
@@ -177,8 +288,8 @@ function toggleOwnExample() {
         loadSamples()
     }
 }
-
-function refreshData(newData, scatterPlot) {
+// TODO this is the main function that specify the boundaries of the tokens and slicing
+function refreshData(newData, newAnnotatedData, scatterPlot) {
 
     var minMaxPoints = findMinMax(newData);
 
@@ -189,39 +300,283 @@ function refreshData(newData, scatterPlot) {
     minMaxPoints[3] += 2;
 
     updateZoomAndPan(minMaxPoints[0], minMaxPoints[1], minMaxPoints[2], minMaxPoints[3]);
+//    TODO this is the get token label function where each category gets the corresponding locations ready to slice the data points and pass that information into scatterChartData which we need to update to match our tags
 
-    var questionIds = tokenInfo.token_indices.question;
-    var answerIds = tokenInfo.token_indices.answer;
-    var sups = tokenInfo.token_indices.sups;
-    var supDatapoints = [];
-
-    for (let i = 0; i < sups.length; i++) {
-        var supIds = sups[i];
-        var supTokens;
-        if ((answerIds.start > supIds.start && answerIds.start < supIds.end)
-            || (answerIds.end > supIds.start && answerIds.end < supIds.end)) {
-            supTokens = newData.slice(supIds.start, answerIds.start).concat(newData.slice(answerIds.end, supIds.end));
-        } else {
-            supTokens = newData.slice(supIds.start, supIds.end);
-        }
-        supDatapoints = supDatapoints.concat(supTokens)
-    }
-
-    var questionDatapoints = newData.slice(questionIds.start, questionIds.end);
-    var answerDatapoints = newData.slice(answerIds.start, answerIds.end);
-    var contextDatapoints = newData.slice(0, tokenInfo.token_indices.question.start).concat(
-        newData.slice(tokenInfo.token_indices.question.end, tokenInfo.token_indices.answer.start),
-        newData.slice(tokenInfo.token_indices.answer.end, newData.length)
-    );
-
-    scatterChartData.datasets[0].data = contextDatapoints;
-    scatterChartData.datasets[1].data = supDatapoints;
-    scatterChartData.datasets[2].data = questionDatapoints;
-    scatterChartData.datasets[3].data = answerDatapoints;
-
+    scatterChartData.datasets[0].data = newAnnotatedData.loc_points;
+    scatterChartData.datasets[1].data = newAnnotatedData.org_points;
+    scatterChartData.datasets[2].data = newAnnotatedData.pers_points;
+    scatterChartData.datasets[3].data = newAnnotatedData.misc_points;
+    scatterChartData.datasets[4].data = newAnnotatedData.o_points;
+    scatterChartData.datasets[5].data = newAnnotatedData.ignore_points;
+    scatterChartData.datasets[6].data = newAnnotatedData.focus_points;
 
     scatterPlot.update();
 }
+
+
+function refreshHeadData(newData, newAnnotatedData, scatterPlot) {
+
+    var minMaxPoints = findMinMax(newData);
+
+    // add padding to avoid clipping labels to keep the labels in the plot
+    minMaxPoints[0] -= 0.01;
+    minMaxPoints[1] += 0.03;
+    minMaxPoints[2] -= 0.01;
+    minMaxPoints[3] += 0.02;
+
+    updateHeadZoomAndPan(minMaxPoints[0], minMaxPoints[1], minMaxPoints[2], minMaxPoints[3]);
+//    TODO this is the get token label function where each category gets the corresponding locations ready to slice the data points and pass that information into scatterChartData which we need to update to match our tags
+
+    scatterChartHeadData.datasets[0].data = newAnnotatedData.loc_points;
+    scatterChartHeadData.datasets[1].data = newAnnotatedData.org_points;
+    scatterChartHeadData.datasets[2].data = newAnnotatedData.pers_points;
+    scatterChartHeadData.datasets[3].data = newAnnotatedData.misc_points;
+    scatterChartHeadData.datasets[4].data = newAnnotatedData.o_points;
+    scatterChartHeadData.datasets[5].data = newAnnotatedData.ignore_points;
+    scatterChartHeadData.datasets[6].data = newAnnotatedData.focus_points;
+
+    scatterPlot.update();
+}
+
+function plot_logits(logits, predictionPlot){
+        predictionPlot.data.labels = logits.labels;
+        predictionPlot.data.datasets[0].data = logits.values;
+        var background = []
+        for (element of logits.labels){
+               background.push(color_map[element])
+          }
+        predictionPlot.data.datasets[0].backgroundColor = background
+        predictionPlot.update();
+}
+
+function compute_focus_logits(focus_data, layerByLayerPlot){
+        layerByLayerPlot.data.labels = focus_data.labels;
+        layerByLayerPlot.data.datasets[0].data = focus_data.focus_prediction;
+        var background = []
+        for (element of focus_data.labels){
+               background.push(color_map[element])
+          }
+        layerByLayerPlot.data.datasets[0].backgroundColor = background
+        layerByLayerPlot.update()
+}
+
+function compute_embedding_similarity(embedding_similarity, embeddingSimilarityPlot){
+        embeddingSimilarityPlot.data.labels = embedding_similarity.labels;
+        embeddingSimilarityPlot.data.datasets[0].data = embedding_similarity.similarity;
+        var background = []
+        for (element of embedding_similarity.labels){
+               background.push('DarkOliveGreen')
+          }
+        embeddingSimilarityPlot.data.datasets[0].backgroundColor = background
+        embeddingSimilarityPlot.update();
+}
+
+
+function generate_attention_summary(data, Plot1, Plot2, color1, color2, label1, label2, title){
+    Plot1.data.labels = data.labels
+    Plot1.data.datasets[0].data = data.analysis1
+    Plot1.data.datasets[0].label =  label1
+    Plot1.options.title.text =  title
+    Plot2.data.labels = data.labels
+    Plot2.data.datasets[0].data = data.analysis2
+    Plot2.data.datasets[0].label =  label2
+    Plot2.options.title.text =  title
+     var plot1_background = []
+     var plot2_background = []
+        for (element of data.labels){
+               plot1_background.push(color1)
+               plot2_background.push(color2)
+          }
+     Plot1.data.datasets[0].backgroundColor = plot1_background
+     Plot2.data.datasets[0].backgroundColor = plot2_background
+
+    Plot1.update()
+    Plot2.update()
+
+}
+
+//function generate_local_global(local_global, LocalPlot, GlobalPlot){
+//    LocalPlot.data.labels = local_global.labels
+//    LocalPlot.data.datasets[0].data = local_global.local
+//    GlobalPlot.data.labels = local_global.labels
+//    GlobalPlot.data.datasets[0].data = local_global.global
+//     var local_background = []
+//        for (element of local_global.local){
+//               local_background.push('red')
+//          }
+//     var global_background = []
+//        for (element of local_global.global){
+//               global_background.push('blue')
+//          }
+//     LocalPlot.data.datasets[0].backgroundColor = local_background
+//     GlobalPlot.data.datasets[0].backgroundColor = global_background
+//
+//    LocalPlot.update();
+//    GlobalPlot.update();
+//
+//}
+function reset_plots(){
+        predictionPlot.data.labels = [];
+        predictionPlot.data.datasets[0].data = [];
+        layerByLayerPlot.data.labels = [];
+        layerByLayerPlot.data.datasets[0].data = [];
+        scatterChartData.datasets[0].data = []
+        scatterChartData.datasets[1].data = []
+        scatterChartData.datasets[2].data = []
+        scatterChartData.datasets[3].data = []
+        scatterChartData.datasets[4].data = []
+        scatterChartData.datasets[5].data = []
+        scatterChartData.datasets[6].data = []
+
+        scatterChartHeadData.datasets[0].data = []
+        scatterChartHeadData.datasets[1].data = []
+        scatterChartHeadData.datasets[2].data = []
+        scatterChartHeadData.datasets[3].data = []
+        scatterChartHeadData.datasets[4].data = []
+        scatterChartHeadData.datasets[5].data = []
+        scatterChartHeadData.datasets[6].data = []
+
+
+        SimilarityPlot.data.labels = [];
+        SimilarityPlot.data.datasets[0].data = [];
+        Plot1.data.labels = [];
+        Plot1.data.datasets[0].data = [];
+        Plot2.data.labels = [];
+        Plot2.data.datasets[0].data = [];
+        HeadSimilarityPlot.data.labels = [];
+        HeadSimilarityPlot.data.datasets[0].data = [];
+        $("#attention_heat").html('')
+
+        $("#layer-nr-slider").val(0);
+        currentLayer = 0
+        refreshLayerNr(currentLayer);
+        $("#attention_layer").val(0);
+        currentAttentionLayer = 0
+        $("#attention_head").val(0);
+        currentAttentionHead = 0
+        refreshAttentionNr(currentAttentionLayer, currentAttentionHead);
+        $("#attention_l").val(0);
+        currentLayer = 0
+        $("#attention_h").val(0);
+        currentHead = 0
+        refreshHeadNr(currentLayer, currentHead);
+
+
+
+        predictionPlot.update()
+        layerByLayerPlot.update()
+        scatterPlot.update();
+        scatterHeadPlot.update();
+        SimilarityPlot.update();
+        HeadSimilarityPlot.update();
+
+}
+
+function compute_similarity(similarity_data, SimilarityPlot, measure = 'similarity'){
+        SimilarityPlot.data.labels = similarity_data.labels;
+        if (measure == 'similarity'){
+            SimilarityPlot.data.datasets[0].data = similarity_data.similarity;
+        }
+        else{
+            SimilarityPlot.data.datasets[0].data = similarity_data.distance;
+        }
+
+        var background = []
+        for (element of similarity_data.labels){
+               background.push(color_map[element.split('_')[2]])
+          }
+        SimilarityPlot.data.datasets[0].backgroundColor = background
+        SimilarityPlot.update()
+}
+
+
+function compute_head_similarity(head_similarity_data, HeadSimilarityPlot, measure = 'similarity'){
+        HeadSimilarityPlot.data.labels = head_similarity_data.labels;
+        if (measure == 'similarity'){
+            HeadSimilarityPlot.data.datasets[0].data = head_similarity_data.similarity;
+        }
+        else{
+            HeadSimilarityPlot.data.datasets[0].data = head_similarity_data.distance;
+        }
+
+        var background = []
+        for (element of head_similarity_data.labels){
+               background.push(color_map[element.split('_')[2]])
+          }
+        HeadSimilarityPlot.data.datasets[0].backgroundColor = background
+        HeadSimilarityPlot.update()
+}
+
+function change_measure(){
+    measure = parseText($('#similarity_measure'));
+    compute_similarity(similarity_data[currentLayer], SimilarityPlot, measure)
+    compute_head_similarity(head_similarity_data, HeadSimilarityPlot, measure)
+}
+
+function change_analysis(){
+
+    var skillsSelect = document.getElementById("change_attention_analysis");
+    var selectedText = skillsSelect.options[skillsSelect.selectedIndex].text;
+    if (selectedText == 'produce_receive'){
+        generate_attention_summary(attention_summary, Plot1, Plot2, 'palevioletred', 'saddlebrown', 'Produce', 'Receive', 'The amount of attention each prediction token produce/receive');
+     }
+     else{
+        generate_attention_summary(local_global, Plot1, Plot2, 'darkcyan', 'deepskyblue', 'Local', 'Global', 'The amount of local/global attention each prediction token produce');
+     }
+}
+
+function change_plot_view(){
+
+    var skillsSelect = document.getElementById("choose_view");
+    var selectedText = skillsSelect.options[skillsSelect.selectedIndex].text;
+    if (selectedText == 'attention_head'){
+        $("#attention_heat").html(attention_heat);
+     }
+     else{
+        $("#attention_heat").html(change_heatmap);
+     }
+}
+
+function initialize_dropdown(model_name){
+    removeOptions(document.getElementById('focus'));
+    sentence = parseText($('#sentence'));
+    labels = parseText($('#gold_standard'));
+    mode = parseText($('#mode'));
+    var data = {};
+    data.sentence = sentence;
+    data.labels = labels;
+    data.model_name = model_name;
+    data.mode = mode;
+
+    $.ajax({
+        url: '/dropdown',
+        type: 'post',
+        data: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        dataType: 'json',
+        success: function (options) {
+            populate_dropdown(options.annotated_tokens);
+        },
+        error: predictionError
+    });
+
+}
+function change_dropdown(){
+        initialize_dropdown(currentTask)
+}
+function populate_dropdown(options){
+    var select = document.getElementById("focus");
+    for(var i = 0; i < options.length; i++) {
+        var opt = options[i];
+        var el = document.createElement("option");
+        el.textContent = opt;
+        el.value = opt;
+        select.appendChild(el);
+    }
+}
+
 
 function updateZoomAndPan(minX, maxX, minY, maxY) {
     var xAxis = scatterPlot.options.scales.xAxes[0];
@@ -239,14 +594,50 @@ function updateZoomAndPan(minX, maxX, minY, maxY) {
     scatterPlot.options.zoom.rangeMax = {x: maxX, y: maxY};
 }
 
+function updateHeadZoomAndPan(minX, maxX, minY, maxY) {
+    var xAxis = scatterHeadPlot.options.scales.xAxes[0];
+    var yAxis = scatterHeadPlot.options.scales.yAxes[0];
+
+    xAxis.ticks.min = minX;
+    xAxis.ticks.max = maxX;
+    yAxis.ticks.min = minY;
+    yAxis.ticks.max = maxY;
+
+    scatterHeadPlot.options.pan.rangeMin = {x: minX, y: minY};
+    scatterHeadPlot.options.pan.rangeMax = {x: maxX, y: maxY};
+
+    scatterHeadPlot.options.zoom.rangeMin = {x: minX, y: minY};
+    scatterHeadPlot.options.zoom.rangeMax = {x: maxX, y: maxY};
+}
+
 function insertSample(sample) {
+    var dict = {"B-LOC": "green", "I-LOC":"green", "B-PERS":"deepskyblue","I-PERS":"deepskyblue","B-ORG":"darkcyan","I-ORG":"darkcyan","B-MISC":"palevioletred","I-MISC":"palevioletred","O":"saddlebrown"}
     $('#id-input').prop('disabled', false);
-    $('#id-input').val(sample.id);
-    $('#question-textarea').val(sample.question);
-    $('#ground-truth-answer').val(sample.answer);
-    $('#predicted-answer').text("");
-    $('#predicted-answer').removeClass('answer-highlighted');
-    $('#context-textarea').val(sample.context);
+    $('#id-input').val(sample.sentence_number);
+    $('#sentence').val(sample.sentence);
+    gold_standard = ''
+    count = 0
+    for (element of sample.labels){
+                   gold_standard+= "Word ("+count + ") : " + element
+                   gold_standard+=" # "
+                   count++;
+          }
+    $('#gold_standard').val(gold_standard);
+    $('#sentence_labels').text(sample.sentence_labels);
+    $('#sentence_labels').addClass('goldstandard-highlighted');
+    initialize_dropdown(currentTask)
+//    populate_dropdwon(sample.tokens)
+    var res = "";
+     var text = document.getElementById("sentence_labels").innerHTML;
+     var split_text = text.split(" ")
+     for (element of split_text){
+                   res+= "<span style='color:"+dict[element.split("_")[1]]+"'>" +element.split("_")[0]+ "</span>";
+                   res+=" "
+          }
+    document.getElementById("sentence_labels").innerHTML = res;
+
+
+
 
     var task = tasks[currentTask];
 
@@ -263,18 +654,24 @@ function insertSample(sample) {
         $('#id-switcher-right').removeClass('id-switcher-label-inactive');
     }
 
-    currentSups = sample.sup_ids;
+}
+
+function removeOptions(selectElement) {
+   var i, L = selectElement.options.length - 1;
+   for(i = L; i >= 0; i--) {
+      selectElement.remove(i);
+   }
 }
 
 function removeSample() {
     $('#id-input').prop('disabled', true);
-    $('#question-textarea').val("");
-    $('#ground-truth-answer').val("");
-    $('#predicted-answer').text("");
-    $('#predicted-answer').removeClass('answer-highlighted');
-    $('#context-textarea').val("");
+    $('#sentence').val("");
+    $('#gold_standard').val("");
+    $('#sentence_labels').text("");
+    $('#sentence_labels').removeClass('goldstandard-highlighted');
+    $('predicted-labels').text("");
+    removeOptions(document.getElementById('focus'));
 
-    currentSups = null;
 
     $('#id-switcher-right').addClass('id-switcher-label-inactive');
     $('#id-switcher-left').addClass('id-switcher-label-inactive');
@@ -289,10 +686,8 @@ function parseText(component) {
     var text = component.val();
     text = encodeURIComponent(text);
 
-    // Remove linebreaks from input
     text = text.replace(/\n/g, " ");
 
-    // Remove quotes from input
     text = text.replace(/\"/g, "'");
 
     text = trim(text);
@@ -301,42 +696,120 @@ function parseText(component) {
 }
 
 
+function specify_prediction_mistakes(currentLayer, prediction, mistakes){
+        predicted_labels = ''
+        count = 0
+        for (element of prediction[currentLayer].labels){
+                   predicted_labels+= "Word ("+ count + ") : " + element
+                   predicted_labels+=" # "
+                   count++;
+          }
+          $('#predicted-labels').val(predicted_labels);
+          $('#mistakes').val(mistakes[currentLayer]);
+
+    }
+
+function change_mode(){
+        requestPredictionAndVis();
+        requestAttention();
+}
+
+
 function processResult(data) {
-    var predictedAnswer = data.prediction.text;
 
-    $('#predicted-answer').text(predictedAnswer);
-    $('#predicted-answer').addClass('answer-highlighted');
-
+    mistakes = data.mistakes;
+    predictedAnswer = data.predicted_tags;
+    var tokens = data.tokens;
     hiddenStates = data.hidden_states;
-    tokenInfo.token_indices = data.token_indices;
+    focus_data = data.prediction;
+    similarity_data = data.layers_similarity;
+//    head_similarity_data = data.heads_similarity;
+    annotated_hiddenStates = data.annotated_hidden_states;
+    attentionHeads = data.attentions_heads;
+    annotated_attentionHeads = data.annotated_heads;
+//    attention_heat = data.attention_heat
+//    attention_summary = data.attention_summary
+//    local_global = data.local_global
+//    change_heatmap = data.change_heatmap
+    var analysisSelect = document.getElementById("change_attention_analysis");
+    var analysis = analysisSelect.options[analysisSelect.selectedIndex].text;
+    var viewSelect = document.getElementById("choose_view");
+    var view = viewSelect.options[viewSelect.selectedIndex].text;
 
-    // clip to largest layer nr
+
     currentLayer = Math.min(tasks[currentTask].layer_nr, currentLayer);
+//    currentAttentionLayer = Math.min(tasks[currentTask].attention_layer_nr, currentAttentionLayer);
+//    currentAttentionHead = Math.min(tasks[currentTask].attention_head_nr, currentAttentionHead);
+    currentHeadLayer = Math.min(tasks[currentTask].attention_layer_nr, currentHeadLayer);
+    currentHead = Math.min(tasks[currentTask].attention_head_nr, currentHead);
+    specify_prediction_mistakes(currentLayer, predictedAnswer, mistakes)
     refreshLayerNr(currentLayer);
+//    refreshAttentionNr(currentAttentionLayer, currentAttentionHead);
+    refreshHeadNr(currentHeadLayer, currentHead);
     adjustSlider(tasks[currentTask].layer_nr);
-    refreshData(hiddenStates[currentLayer], scatterPlot);
+    refreshData(hiddenStates[currentLayer], annotated_hiddenStates[currentLayer], scatterPlot);
+    refreshHeadData(attentionHeads[currentHeadLayer][currentHead], annotated_attentionHeads[currentHeadLayer][currentHead], scatterHeadPlot);
+
+
+
+     plot_logits(predictedAnswer[currentLayer], predictionPlot);
+     compute_focus_logits(focus_data[currentLayer], layerByLayerPlot);
+     compute_similarity(similarity_data[currentLayer], SimilarityPlot);
+//     compute_head_similarity(head_similarity_data, HeadSimilarityPlot)
+
+//      if (view == 'attention_head'){
+//        $("#attention_heat").html(attention_heat);
+//     }
+//     else{
+//        $("#attention_heat").html(change_heatmap);
+//     }
+//
+//     if (analysis == 'produce_receive'){
+//        generate_attention_summary(attention_summary, Plot1, Plot2, 'palevioletred', 'saddlebrown', 'Produce', 'Receive', 'The amount of attention each prediction token produce/receive');
+//     }
+//     else{
+//        generate_attention_summary(local_global, Plot1, Plot2, 'darkcyan', 'deepskyblue', 'Local', 'Global', 'The amount of local/global attention each prediction token produce');
+//     }
 
     $('#button-spinner').hide();
+    $('#attention_button_spinner').hide();
+    $('#impact_button_spinner').hide();
+
 }
+
+
+
+
+
+
 
 function predictionError() {
     var errorMessage = "\< Prediction not possible \>";
     $('#predicted-answer').text(errorMessage);
 
     $('#button-spinner').hide();
+    $('#attention_button_spinner').hide();
+    $('#impact_button_spinner').hide();
 }
 
 function requestPredictionAndVis() {
 
     $('#button-spinner').show();
+    $('#attention_button_spinner').show();
+    $('#impact_button_spinner').show();
 
     var sample = {};
-
     sample.id = parseText($('#id-input'));
-    sample.question = parseText($('#question-textarea'));
-    sample.context = parseText($('#context-textarea'));
-    sample.answer = parseText($('#ground-truth-answer'));
-    sample.sup_ids = currentSups;
+    sample.sentence = parseText($('#sentence'));
+    sample.sentence_labels = parseText($('#sentence_labels'));
+    sample.focus = parseText($('#focus'));
+    sample.gold_standard = parseText($('#gold_standard'));
+    sample.random = parseText($('#random'));
+    sample.mode = parseText($('#mode'));
+
+
+    sample.attention_layer = currentAttentionLayer
+    sample.attention_head = currentAttentionHead
 
     var data = {};
     data.sample = sample;
@@ -357,20 +830,157 @@ function requestPredictionAndVis() {
     });
 }
 
+
+function processImpact(data) {
+
+    var task = tasks[currentTask]
+    change_heatmap = data.change_heatmap
+//    embedding_similarity = data.embedding_similarity
+    $("#attention_heat").html(change_heatmap);
+//    compute_embedding_similarity(embedding_similarity[task.currentIndex], embeddingSimilarityPlot)
+
+
+    $('#button-spinner').hide();
+    $('#attention_button_spinner').hide();
+    $('#impact_button_spinner').hide();
+    $("#choose_view").val("training_impact");
+
+}
+
+
+function requestImpact() {
+
+    $('#button-spinner').show();
+    $('#attention_button_spinner').show();
+    $('#impact_button_spinner').show();
+
+    var sample = {};
+    sample.id = parseText($('#id-input'));
+    sample.sentence = parseText($('#sentence'));
+    sample.sentence_labels = parseText($('#sentence_labels'));
+    sample.gold_standard = parseText($('#gold_standard'));
+    sample.mode = parseText($('#mode'));
+
+    var data = {};
+    data.sample = sample;
+    data.model = currentTask;
+
+    $.ajax({
+        url: '/impact',
+        type: 'post',
+        data: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        dataType: 'json',
+        success: function (data) {
+            processImpact(data);
+        },
+        error: predictionError
+    });
+}
+
+function processAttention(data) {
+
+
+    attention_heat = data.attention_heat
+    attention_summary = data.attention_summary
+    local_global = data.local_global
+
+    var analysisSelect = document.getElementById("change_attention_analysis");
+    var analysis = analysisSelect.options[analysisSelect.selectedIndex].text;
+    var viewSelect = document.getElementById("choose_view");
+    var view = viewSelect.options[viewSelect.selectedIndex].text;
+    head_similarity_data = data.head_similarity;
+    compute_head_similarity(head_similarity_data, HeadSimilarityPlot)
+
+    currentAttentionLayer = Math.min(tasks[currentTask].attention_layer_nr, currentAttentionLayer);
+    currentAttentionHead = Math.min(tasks[currentTask].attention_head_nr, currentAttentionHead);
+    refreshAttentionNr(currentAttentionLayer, currentAttentionHead);
+
+    $("#attention_heat").html(attention_heat);
+    $("#choose_view").val("attention_head");
+
+     if (analysis == 'produce_receive'){
+        generate_attention_summary(attention_summary, Plot1, Plot2, 'palevioletred', 'saddlebrown', 'Produce', 'Receive', 'The amount of attention each prediction token produce/receive');
+     }
+     else{
+        generate_attention_summary(local_global, Plot1, Plot2, 'darkcyan', 'deepskyblue', 'Local', 'Global', 'The amount of local/global attention each prediction token produce');
+     }
+
+    $('#button-spinner').hide();
+    $('#attention_button_spinner').hide();
+    $('#impact_button_spinner').hide();
+
+
+}
+
+
+function requestAttention(){
+
+    $('#button-spinner').show();
+    $('#attention_button_spinner').show();
+    $('#impact_button_spinner').show();
+
+    var sample = {};
+    sample.id = parseText($('#id-input'));
+    sample.sentence = parseText($('#sentence'));
+    sample.sentence_labels = parseText($('#sentence_labels'));
+    sample.gold_standard = parseText($('#gold_standard'));
+    sample.attention_layer = currentAttentionLayer
+    sample.attention_head = currentAttentionHead
+    sample.mode = parseText($('#mode'));
+    sample.focus = parseText($('#focus'));
+
+    var data = {};
+    data.sample = sample;
+    data.model = currentTask;
+
+    $.ajax({
+        url: '/attention',
+        type: 'post',
+        data: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        dataType: 'json',
+        success: function (data) {
+            processAttention(data);
+        },
+        error: predictionError
+    });
+}
+
+
 function loadSamples() {
     var task = tasks[currentTask];
 
     if (task.samples === null) {
         $.getJSON(task.file, function (json) {
             task.samples = json;
-            task.currentIndex = Math.floor(Math.random() * task.samples.length);
-
+            task.currentIndex = 0
             insertSample(task.samples[task.currentIndex]);
+//            requestImpact();
         });
     } else {
         insertSample(task.samples[task.currentIndex]);
+//        requestImpact();
     }
 }
+
+function get_sample(){
+    var task = tasks[currentTask];
+
+    var sample_id = document.getElementById("id-input").value;
+
+    if (task.currentIndex < task.samples.length - 1 && !ownExample){
+            task.currentIndex = sample_id
+            insertSample(task.samples[task.currentIndex]);
+    }
+
+
+}
+
 
 function switchToHotpot() {
     currentTask = 'hotpot';
@@ -378,9 +988,13 @@ function switchToHotpot() {
     $('#hotpotTab').addClass('task-tab-active');
     $('#squadTab').removeClass('task-tab-active');
     $('#babiTab').removeClass('task-tab-active');
+    $('#v2secibdTab').removeClass('task-tab-active');
+    reset_plots()
+//    requestImpact()
 
     if (!ownExample) {
         loadSamples();
+//        requestImpact();
     }
 }
 
@@ -390,9 +1004,13 @@ function switchToSquad() {
     $('#squadTab').addClass('task-tab-active');
     $('#hotpotTab').removeClass('task-tab-active');
     $('#babiTab').removeClass('task-tab-active');
+    $('#v2secibdTab').removeClass('task-tab-active');
+    reset_plots();
+//    requestImpact();
 
     if (!ownExample) {
         loadSamples();
+//        requestImpact();
     }
 }
 
@@ -402,9 +1020,29 @@ function switchToBabi() {
     $('#squadTab').removeClass('task-tab-active');
     $('#hotpotTab').removeClass('task-tab-active');
     $('#babiTab').addClass('task-tab-active');
+    $('#v2secibdTab').removeClass('task-tab-active');
+    reset_plots();
+//    requestImpact();
 
     if (!ownExample) {
         loadSamples();
+//        requestImpact();
+    }
+}
+
+function switchTov2SecondToken() {
+    currentTask = 'v2SecondToken';
+
+    $('#squadTab').removeClass('task-tab-active');
+    $('#hotpotTab').removeClass('task-tab-active');
+    $('#babiTab').removeClass('task-tab-active');
+    $('#v2secibdTab').addClass('task-tab-active');
+    reset_plots();
+//    requestImpact();
+
+    if (!ownExample) {
+        loadSamples();
+//        requestImpact();
     }
 }
 
@@ -414,8 +1052,8 @@ function switchIdLeft() {
     if (task.currentIndex > 0 && !ownExample) {
 
         task.currentIndex = task.currentIndex - 1;
-
         insertSample(task.samples[task.currentIndex]);
+//        compute_embedding_similarity(embedding_similarity[task.currentIndex], embeddingSimilarityPlot)
     }
 }
 
@@ -424,8 +1062,8 @@ function switchIdRight() {
 
     if (task.currentIndex < task.samples.length - 1 && !ownExample) {
         task.currentIndex = task.currentIndex + 1;
-
         insertSample(task.samples[task.currentIndex]);
+//        compute_embedding_similarity(embedding_similarity[task.currentIndex], embeddingSimilarityPlot)
     }
 }
 
@@ -436,12 +1074,37 @@ function refreshLayerNr(newLayer) {
     $("#layer_nr_label").text("Layer " + currentLayer);
 }
 
+function refreshAttentionNr(newLayer, newHead){
+    currentAttentionLayer = newLayer
+    currentAttentionHead = newHead
+    $("#attention_layer_nr_label").text("Layer " + newLayer);
+    $("#attention_head_nr_label").text("Head " + newHead);
+}
+
+function refreshHeadNr(newLayer, newHead){
+    currentHeadLayer = newLayer
+    currentHead = newHead
+    $("#attention_l_nr_label").text("Layer " + newLayer);
+    $("#attention_h_nr_label").text("Head " + newHead);
+}
+
+
+
+
+
+
 $(document).ready(function () {
+// TODO this is where everything start running
 
     $("#layer-nr-slider").val(0);
+    $("#attention_layer").val(0);
+    $("#attention_head").val(0);
+    $("#attention_l").val(0);
+    $("#attention_h").val(0);
     loadSamples('squad');
 
-    var ctx = $('#plot_canvas');
+
+    var ctx = $('#plot_layers');
 
     var aspectRatio = (($(window).width() - 3000) / (-3060)).toFixed(1);
     aspectRatio = Math.max(aspectRatio, 0.5);
@@ -537,22 +1200,374 @@ $(document).ready(function () {
         }
     });
 
+    var heads_ctx = $('#plot_heads');
+
+    var aspectRatio = (($(window).width() - 3000) / (-3060)).toFixed(1);
+    aspectRatio = Math.max(aspectRatio, 0.5);
+    aspectRatio = Math.min(aspectRatio, 1);
+
+    scatterHeadPlot = Chart.Scatter(heads_ctx, {
+        data: scatterChartHeadData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: aspectRatio,
+            pan: {
+                enabled: true,
+                mode: "xy",
+                speed: 0.01,
+                rangeMin: {
+                    x: 0,
+                    y: 0
+                },
+                rangeMax: {
+                    x: 0,
+                    y: 0
+                }
+            },
+            zoom: {
+                enabled: true,
+                drag: false,
+                mode: "xy",
+                speed: 0.02,
+                rangeMin: {
+                    x: 0,
+                    y: 0
+                },
+                rangeMax: {
+                    x: 10,
+                    y: 10
+                }
+            },
+            scales: {
+                xAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'PC 1'
+                    },
+                    ticks: {
+                        maxRotation: 0,
+                        precision: 0,
+                        min: 0,
+                        max: 10,
+                        callback: function (value, index, values) {
+                            return Math.round(value);
+                        }
+                    }
+                }],
+                yAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'PC 2'
+                    },
+                    ticks: {
+                        maxRotation: 0,
+                        precision: 0,
+                        min: 0,
+                        max: 10,
+                        callback: function (value, index, values) {
+                            return Math.round(value);
+                        }
+
+                    }
+                }]
+            },
+            tooltips: {
+                callbacks: {
+                    label: function (tooltipItem, data) {
+                        return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].label;
+                    }
+                }
+            },
+            plugins: {
+                datalabels: {
+                    anchor: 'end',
+                    align: 'right',
+                    color: 'grey',
+                    offset: 8,
+                    padding: 0,
+                    clamp: true
+                },
+                legend: {
+                    display: true
+                },
+                title: false
+            }
+        }
+    });
+
     $("#layer-nr-slider").on("input change", function () {
         var newLayer = $(this).val();
 
         if (newLayer !== currentLayer) {
             refreshLayerNr(newLayer);
 
-            if (hiddenStates.length > currentLayer) {
-                refreshData(hiddenStates[currentLayer], scatterPlot);
+            if (annotated_hiddenStates.length > currentLayer) {
+                refreshData(hiddenStates[currentLayer], annotated_hiddenStates[currentLayer], scatterPlot);
+                plot_logits(predictedAnswer[currentLayer], predictionPlot);
+                compute_focus_logits(focus_data[currentLayer], layerByLayerPlot);
+                compute_similarity(similarity_data[currentLayer], SimilarityPlot);
+                specify_prediction_mistakes(currentLayer, predictedAnswer, mistakes)
             }
         }
     });
+
+    $("#attention_layer").on("input change", function () {
+        var newLayer = $(this).val();
+        var newHead = $("#attention_head").val();
+
+        if (newLayer !== currentAttentionLayer) {
+            refreshAttentionNr(newLayer, newHead);
+            requestAttention();
+            compute_head_similarity(head_similarity_data, HeadSimilarityPlot)
+
+        }
+    });
+    $("#attention_head").on("input change", function () {
+        var newHead = $(this).val();
+        var newLayer = $("#attention_layer").val();
+
+        if (newHead !== currentAttentionHead) {
+            refreshAttentionNr(newLayer, newHead);
+            requestAttention();
+            compute_head_similarity(head_similarity_data, HeadSimilarityPlot)
+
+        }
+    });
+
+    $("#attention_l").on("input change", function () {
+        var newLayer = $(this).val();
+        var newHead = $("#attention_h").val();
+
+        if (newLayer !== currentAttentionLayer) {
+            refreshHeadNr(newLayer, newHead);
+            refreshHeadData(attentionHeads[currentHeadLayer][currentHead], annotated_attentionHeads[currentHeadLayer][currentHead], scatterHeadPlot);
+//            compute_head_similarity(head_similarity_data[currentHeadLayer][currentHead], embeddingSimilarityPlot)
+
+
+        }
+    });
+    $("#attention_h").on("input change", function () {
+        var newHead = $(this).val();
+        var newLayer = $("#attention_l").val();
+
+        if (newHead !== currentAttentionHead) {
+            refreshHeadNr(newLayer, newHead);
+            refreshHeadData(attentionHeads[currentHeadLayer][currentHead], annotated_attentionHeads[currentHeadLayer][currentHead], scatterHeadPlot);
+//            compute_head_similarity(head_similarity_data[currentHeadLayer][currentHead], embeddingSimilarityPlot)
+
+        }
+    });
+
+
+
 
     $("#own-example-check").change(function () {
         toggleOwnExample();
     });
 
     $("#button-spinner").hide();
+    $('#attention_button_spinner').hide();
+    $('#impact_button_spinner').hide();
+
+
+    var bar_ctx = $('#prediction');
+    predictionPlot = Chart.Bar(bar_ctx, {
+          type: 'bar',
+          data: {
+            labels: [],
+            datasets: [
+              {
+                label: "NER tags",
+                backgroundColor: [],
+                data: [],
+            datalabels:{
+            color:'red',
+            anchor: 'end',
+            align: 'top',
+            font:'0.5',
+            offset:10,
+            display: false
+            }
+
+              }
+            ]
+          },
+          options: {
+            legend: { display: true, responsive: true, },
+            title: {
+              display: true,
+              text: 'Predictions of the current example'
+            }
+          }
+ });
+
+
+
+
+
+
+var layer_logits_ctx = $('#focus_logits')
+    layerByLayerPlot = Chart.Bar(layer_logits_ctx, {
+          type: 'bar',
+          data: {
+            labels: [],
+            datasets: [
+              {
+                label: "NER tags",
+                backgroundColor: [""],
+                data: []
+              }
+            ],
+           },
+          options: {
+            legend: { display: true, responsive: true, },
+            title: {
+              display: true,
+              text: 'Logits of the focus token'
+            }
+          }
+ });
+
+
+ var similarity_ctx = $('#similarity')
+    SimilarityPlot = Chart.Bar(similarity_ctx, {
+          type: 'bar',
+          data: {
+            labels: [],
+            datasets: [
+              {
+                label: "",
+                backgroundColor: [],
+                data: [],
+                datalabels:{
+                display: false
+            }
+              },
+            ],
+           },
+          options: {
+            legend: { display: true, responsive: true, },
+            title: {
+              display: true,
+              text: 'Similarity between focus and all tokens'
+            }
+          }
+ });
+
+
+ var similarity_ctx = $('#head_similarity')
+    HeadSimilarityPlot = Chart.Bar(similarity_ctx, {
+          type: 'bar',
+          data: {
+            labels: [],
+            datasets: [
+              {
+                label: "",
+                backgroundColor: [],
+                data: [],
+                datalabels:{
+                display: false
+            }
+              },
+            ],
+           },
+          options: {
+            legend: { display: true, responsive: true, },
+            title: {
+              display: true,
+              text: 'Head Similarity between focus and all tokens'
+            }
+          }
+ });
+
+
+
+ var plot1_ctx = $('#plot1')
+    Plot1 = Chart.Bar(plot1_ctx, {
+          type: 'bar',
+          data: {
+            labels: [],
+            datasets: [
+              {
+                label: "",
+                backgroundColor: ['red'],
+                data: [],
+                datalabels:{
+                display: false
+            }
+              },
+
+            ],
+           },
+          options: {
+            legend: { display: true, responsive: true, },
+            title: {
+              display: true,
+              text: ''
+            }
+          }
+ });
+
+ var plot2_ctx = $('#plot2')
+    Plot2 = Chart.Bar(plot2_ctx, {
+          type: 'bar',
+          data: {
+            labels: [],
+            datasets: [
+              {
+                label: "",
+                backgroundColor: ['red'],
+                data: [],
+                datalabels:{
+                display: false
+            }
+              },
+
+            ],
+           },
+          options: {
+            legend: { display: true, responsive: true, },
+            title: {
+              display: true,
+              text: ''
+            }
+          }
+ });
+
+// var embedding_similarity_ctx = $('#embedding_similarity');
+//    embeddingSimilarityPlot = Chart.Bar(embedding_similarity_ctx, {
+//          type: 'bar',
+//          data: {
+//            labels: [],
+//            datasets: [
+//              {
+//                label: "Word Embedding Similarity",
+//                backgroundColor: ['DarkOliveGreen'],
+//                data: [],
+//            datalabels:{
+//            color:'red',
+//            anchor: 'end',
+//            align: 'top',
+//            font:'0.5',
+//            offset:10,
+//            display: false
+//            }
+//
+//              }
+//            ]
+//          },
+//          options: {
+//            legend: { display: true, responsive: true, },
+//            title: {
+//              display: true,
+//              text: 'Similarity between pretrained word embedding and fine tuned word embedding'
+//            }
+//          }
+// });
+
+
+
 
 });
+

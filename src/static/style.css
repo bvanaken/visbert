@@ -13,6 +13,22 @@ body {
     font-weight: 700;
 }
 
+.color-0 {
+  color: "violet";
+}
+.color-1 {
+  color: "indigo";
+}
+.color-2 {
+  color: "blue";
+}
+.color-3 {
+  color: "green";
+}
+.color-4 {
+  color: "red";
+}
+
 .bert-image {
     margin-right: 10pt;
     width: 20pt;
@@ -65,7 +81,7 @@ input, textarea, select { font-family:inherit; font-weight: 400; }
     padding-left: 9pt;
 }
 
-.answer-highlighted {
+.goldstandard-highlighted {
     color: purple;
     font-weight: bold;
     font-size: 11pt;
@@ -135,6 +151,9 @@ input[type=text] {
     font-size: 11pt;
 }
 
+
+
+
 .task-tab {
     border-top: None;
     border-left: None;
@@ -143,6 +162,21 @@ input[type=text] {
     border-bottom: solid #bbb 1px;
     cursor: pointer;
 }
+
+select {
+  // A reset of styles, including removing the default dropdown arrow
+  appearance: none;
+  // Additional resets for further consistency
+  background-color: transparent;
+  border: none;
+  padding: 0 1em 0 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: inherit;
+  line-height: inherit;
+}
+
 
 .task-tab-active {
     border-top: solid #bbb 1px;
@@ -158,9 +192,9 @@ input[type=text] {
 }
 
 .question-form-container {
-    padding: 10pt  10pt 20pt 20pt;
+    padding: 40pt  40pt 40pt 40pt;
     background-color: #f4f7f8;
-    margin-bottom: 10pt;
+    margin-bottom: 40pt;
     border-left: solid #ccc 1px;
     border-right: solid #ccc 1px;
     border-bottom: solid #ccc 1px;
@@ -177,14 +211,14 @@ input[type=text] {
 }
 
 .canvas-container {
-    margin-left: -36pt;
+    margin-left: -10pt;
     margin-right: -5pt;
     margin-bottom: 50pt;
 }
 
 .id-switcher-input {
     margin-top: 11pt;
-    width: 150pt;
+    width: 35pt;
     color: #495057;
     margin-left: -3pt;
     margin-right: -3pt;
