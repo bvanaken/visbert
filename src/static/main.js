@@ -192,8 +192,8 @@ var tasks = {
         layer_nr: 12,
         attention_layer_nr: 11,
         attention_head_nr: 11,
-
-        phaseLabels: basePhaseLabels
+        phaseLabels: basePhaseLabels,
+        ner_labels: ['B-LOC', 'O', 'B-ORG', 'I-ORG', 'B-PERS', 'I-PERS', 'I-LOC', 'B-MISC', 'I-MISC']
     },
     babi: {
         file: ANERCorp_test,
@@ -202,7 +202,8 @@ var tasks = {
         layer_nr: 12,
         attention_layer_nr: 11,
         attention_head_nr: 11,
-        phaseLabels: basePhaseLabels
+        phaseLabels: basePhaseLabels,
+        ner_labels: ['B-LOC', 'O', 'B-ORG', 'I-ORG', 'B-PERS', 'I-PERS', 'I-LOC', 'B-MISC', 'I-MISC']
     },
     hotpot: {
         file: ANERCorp_test,
@@ -211,7 +212,8 @@ var tasks = {
         layer_nr: 12,
         attention_layer_nr: 11,
         attention_head_nr: 11,
-        phaseLabels: basePhaseLabels
+        phaseLabels: basePhaseLabels,
+        ner_labels: ['B-LOC', 'O', 'B-ORG', 'I-ORG', 'B-PERS', 'I-PERS', 'I-LOC', 'B-MISC', 'I-MISC']
     },
     v2SecondToken: {
         file: ANERCorp_test,
@@ -220,7 +222,8 @@ var tasks = {
         layer_nr: 12,
         attention_layer_nr: 11,
         attention_head_nr: 11,
-        phaseLabels: basePhaseLabels
+        phaseLabels: basePhaseLabels,
+        ner_labels: ['B-LOC', 'O', 'B-ORG', 'I-ORG', 'B-PERS', 'I-PERS', 'I-LOC', 'B-MISC', 'I-MISC']
     }
 };
 
@@ -304,7 +307,6 @@ function refreshData(newData, newAnnotatedData, scatterPlot) {
 
     scatterPlot.update();
 }
-
 
 function refreshHeadData(newData, newAnnotatedData, scatterPlot) {
 
@@ -511,30 +513,42 @@ function reset_plots(){
 }
 
 // Sample Functions
+
+function separate_sentence_labels(sentenceList){
+        sentence = sentenceList.split('*$*')
+        count = 0;
+        var words = "";
+        var gold_standard = "";
+        var sentence_labels = "";
+        var sentence_words = "";
+        for (element of sentence){
+                   words+= "Word ("+count + ") : " + element.split("&#&")[0]
+                   words+=" &#& "
+                   gold_standard+= "Word ("+count + ") : " + element.split("&#&")[1]
+                   gold_standard+=" &#& "
+                   count++;
+                   sentence_labels+= "<span style='color:"+color_map[element.split("&#&")[1]]+"'>" +element.split("&#&")[0]+ "</span>";
+                   sentence_labels+=" "
+          }
+        return {
+            words,
+            gold_standard,
+            sentence_labels,
+        };
+}
+
 function insertSample(sample) {
-    var dict = {"B-LOC": "green", "I-LOC":"green", "B-PERS":"deepskyblue","I-PERS":"deepskyblue","B-ORG":"darkcyan","I-ORG":"darkcyan","B-MISC":"palevioletred","I-MISC":"palevioletred","O":"saddlebrown"}
+
     $('#id-input').prop('disabled', false);
     $('#id-input').val(sample.sentence_number);
+    let { words, gold_standard, sentence_labels} = separate_sentence_labels(sample.sentence_labels);
     $('#sentence').val(sample.sentence);
-    gold_standard = ''
-    count = 0
-    for (element of sample.labels){
-                   gold_standard+= "Word ("+count + ") : " + element
-                   gold_standard+=" # "
-                   count++;
-          }
+    $('#annotated_sentence').val(words);
     $('#gold_standard').val(gold_standard);
-    $('#sentence_labels').text(sample.sentence_labels);
+    document.getElementById("sentence_labels").innerHTML = sentence_labels;
     $('#sentence_labels').addClass('goldstandard-highlighted');
     initialize_dropdown(currentTask)
-    var res = "";
-     var text = document.getElementById("sentence_labels").innerHTML;
-     var split_text = text.split(" ")
-     for (element of split_text){
-                   res+= "<span style='color:"+dict[element.split("_")[1]]+"'>" +element.split("_")[0]+ "</span>";
-                   res+=" "
-          }
-    document.getElementById("sentence_labels").innerHTML = res;
+
     var task = tasks[currentTask];
     if (task.currentIndex === 0) {
         $('#id-switcher-left').addClass("id-switcher-label-inactive");
@@ -574,6 +588,7 @@ function initialize_dropdown(model_name){
     data.labels = labels;
     data.model_name = model_name;
     data.mode = mode;
+    data.ner_labels = tasks[currentTask].ner_labels
 
     $.ajax({
         url: '/dropdown',
@@ -617,16 +632,11 @@ function parseText(component) {
     function trim(s) {
         return (s || '').replace(/^\s+|\s+$/g, '');
     }
-
     var text = component.val();
     text = encodeURIComponent(text);
-
     text = text.replace(/\n/g, " ");
-
     text = text.replace(/\"/g, "'");
-
     text = trim(text);
-
     return text;
 }
 
@@ -649,11 +659,10 @@ function change_mode(){
         requestAttention();
 }
 
-
-
 // Request Functions
 
 function processResult(data) {
+
     mistakes = data.mistakes;
     predictedAnswer = data.predicted_tags;
     var tokens = data.tokens;
@@ -689,6 +698,7 @@ function processResult(data) {
 }
 
 function requestPredictionAndVis() {
+
     $('#button-spinner').show();
     $('#attention_button_spinner').show();
     $('#impact_button_spinner').show();
@@ -708,6 +718,7 @@ function requestPredictionAndVis() {
     var data = {};
     data.sample = sample;
     data.model = currentTask;
+    data.ner_labels = tasks[currentTask].ner_labels
 
     $.ajax({
         url: '/predict',
@@ -759,6 +770,7 @@ function requestImpact() {
     var data = {};
     data.sample = sample;
     data.model = currentTask;
+    data.ner_labels = tasks[currentTask].ner_labels
 
     $.ajax({
         url: '/impact',
@@ -828,6 +840,7 @@ function requestAttention(){
     var data = {};
     data.sample = sample;
     data.model = currentTask;
+    data.ner_labels = tasks[currentTask].ner_labels
 
     $.ajax({
         url: '/attention',
