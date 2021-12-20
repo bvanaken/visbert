@@ -221,7 +221,6 @@ def compute_training_impact(model_name, features):
         flag = True
     else:
         raise Exception
-    print ('change')
     training_impact = AttentionSimilarity(model.model_data,
                                           model.pretrained_ner_model.bert,
                                           model.ner_model.bert,
@@ -249,43 +248,6 @@ class AttentionSimilarity:
         self.tokenizer = tokeniser
         self.preprocessor = preprocessor
         self.tokens = tokens
-
-    # def read_arabic_data(self, path):
-    #     with open(path, 'r', encoding='utf-8') as f:
-    #         data = []
-    #         sentence = []
-    #         for line in f:
-    #             if len(line.split()) != 0:
-    #                 if line.split()[0] == '.':
-    #                     if len(sentence) > 0:
-    #                         data.append(' '.join(sentence))
-    #                         sentence = []
-    #                     continue
-    #                 splits = line.split()
-    #                 if 'TB' not in splits:
-    #                     sentence.append(splits[0])
-    #     return data
-    # def read_arabic_data(self, path):
-    #     with open(path, 'r', encoding='utf-8') as f:
-    #         data = []
-    #         sentence = []
-    #         label = []
-    #         for line in f:
-    #             if len(line.split()) != 0:
-    #                 if line.split()[0] == '.':
-    #                     if len(sentence) > 0:
-    #                         data.append((sentence, label))
-    #                         sentence = []
-    #                         label = []
-    #                     continue
-    #                 splits = line.split()
-    #                 if 'TB' not in splits:
-    #                     sentence.append(splits[0])
-    #                     if len(splits) == 2:
-    #                         label.append(splits[1])
-    #                     else:
-    #                         label.append(splits[-1])
-    #     return data
 
     def format_attention(self, attention):
         squeezed = []
