@@ -54,11 +54,16 @@ def initialize_dropdown():
                      sentence_labels="",
                      labels=[l for l in labels.split(" ") if l in ner_labels],
                      ner_labels=ner_labels,
-                     mode = mode)
+                     mode=mode)
 
     annotated_tokens = model.initialize_dropdown(data, model_name)
     output = {
         'annotated_tokens': annotated_tokens.tolist(),
+        # 'tab1': model.model1.tab_name,
+        # 'tab2': model.model2.tab_name,
+        # 'tab3': model.model3.tab_name,
+        # 'tab4': model.model4.tab_name,
+        'tab5': model.model5.tab_name,
     }
 
     return jsonify(output)
@@ -181,7 +186,7 @@ def get_impact():
                        mode= mode)
 
     layer_outputs, hidden_states, attentions, features = model.tokenize_and_predict(sample, model_name)
-    change_matrix, embedding_similarities = model.compute_training_impact(model_name, features)
+    change_matrix = model.compute_training_impact(model_name, features)
     change_fig = px.imshow(change_matrix,
                     labels=dict(x="Heads", y="Layers", color="Similarity Score"),
                     )
@@ -217,7 +222,6 @@ def get_focus_prediction(layer_outputs, focus, features):
             labels.append(features.inv_label_map[i])
         layer_focus_prediction.append({'focus_prediction': (softmax(focus_prediction) * 10)[0].tolist(), 'labels': labels})
     return  layer_focus_prediction
-#  TODO add two side bars where the first one is for the layer when the other side bar is moved then it gets the attention head but we need to condition it somehow  we can add nedt to the sidebar a check box says veiw heads and that will make the heads working
 
 
 def generate_model_output(sample, model_name):
@@ -451,19 +455,23 @@ def get_labels_for_tokens(features, layers, focus):
 
 def run():
     parser = argparse.ArgumentParser()
-    parser.add_argument("base_folder", help="directory where model files are stored")
-    parser.add_argument("data1_dir", help="directory where model files are stored")
-    parser.add_argument("model1_name", help="the name of the first model")
-    parser.add_argument("model2_name", help="the name of the second model")
-    parser.add_argument("model3_name", help="the name of the third model")
-    parser.add_argument("model4_name", help="the name of the third model")
-    parser.add_argument("tab1_name", help="the name of the first tab")
-    parser.add_argument("tab2_name", help="the name of the second tab")
-    parser.add_argument("tab3_name", help="the name of the third tab")
-    parser.add_argument("tab4_name", help="the name of the third tab")
-    parser.add_argument("model1_type", help="the type of the first model")
-    parser.add_argument("model2_type", help="the type of the second model")
-    parser.add_argument("model3_type", help="the type of the third model")
+    parser.add_argument("base_folder", help="Base Directory")
+    parser.add_argument("data1_dir", help="ANERCorp Directory")
+    parser.add_argument("data2_dir", help="NERCorp Directory")
+    parser.add_argument("model1_name", help="First Model Name")
+    parser.add_argument("model2_name", help="Second Model Name")
+    parser.add_argument("model3_name", help="Third Model Name")
+    parser.add_argument("model4_name", help="Fourth Model Name")
+    parser.add_argument("model5_name", help="Fifth Model Name")
+    parser.add_argument("tab1_name", help="First Model Tab")
+    parser.add_argument("tab2_name", help="Second Model Tab")
+    parser.add_argument("tab3_name", help="Third Model Tab")
+    parser.add_argument("tab4_name", help="Fourth Model Tab")
+    parser.add_argument("tab5_name", help="Fifth Model Tab")
+    parser.add_argument("model1_type", help="AraBERTv02 Model Type")
+    parser.add_argument("model2_type", help="AraBERT Model Type")
+    parser.add_argument("model3_type", help="AraBERTv2 Model Type")
+    parser.add_argument("model4_type", help="BERT Model Type")
     args = parser.parse_args()
     logger.debug("Init BERT models")
     model.init(args)
