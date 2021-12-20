@@ -1,9 +1,7 @@
 from transformers import BertModel, BertTokenizer, BertConfig
-# from arabert.preprocess import ArabertPreprocessor, prefix_symbols , suffix_symblos
 from arabert.preprocess import ArabertPreprocessor
 from farasa.segmenter import FarasaSegmenter
 
-from data_utils import (parse_prediction, RawResult)
 import torch
 from utils import current_milli_time
 import logging
@@ -543,18 +541,3 @@ def init(args):
     # model4 = m4
     # logger.debug(f"Finished loading {args.model4_name}")
 
-    # squad_model_file = os.path.join(model_dir, "arabertv2_ner.bin")
-    # # babi_model_file = os.path.join(model_dir, "babi.bin")
-    # # hotpot_model_file = os.path.join(model_dir, "hotpot_distract.bin")
-    # cache_dir = os.path.join(model_dir, "tmp")
-    #
-    # squad_model = load_model(squad_model_file, 'aubmindlab/bert-base-arabertv2', cache_dir=cache_dir)
-    # # babi_model = load_model(babi_model_file, 'bert-base-uncased', cache_dir=cache_dir)
-    # # TODO find out the main difference between do_lower_case and not because sometimes this normalize the text and sometimes it doesn't
-    # base_tokenizer = BertTokenizer.from_pretrained('aubmindlab/bert-base-arabertv2', cache_dir=cache_dir)
-    # farasa_segmenter = FarasaSegmenter(interactive=True)
-    # base_preprocessor = ArabertPreprocessor('aubmindlab/bert-base-arabertv2')
-    # ner_model = load_ner_model('aubmindlab/bert-base-arabertv2', squad_model_file)
-    #
-    # # hotpot_model = load_model(hotpot_model_file, 'bert-large-uncased', cache_dir=cache_dir)
-    # large_tokenizer = BertTokenizer.from_pretrained('bert-large-uncased', cache_dir=cache_dir, do_lower_case=True)
