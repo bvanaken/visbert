@@ -117,11 +117,12 @@ class InputFeatures(object):
 
 class NERSample:
     # def __init__(self, sample_id: str, sentence: List, sentence_labels: List,  labels: List, ner_labels: List):
-    def __init__(self, sample_id: str, sentence: List, sentence_labels: List, labels: List, mode: str):
+    def __init__(self, sample_id: str, sentence: List, sentence_labels: List, labels: List, ner_labels: List, mode: str):
         self.sample_id = sample_id
         self.sentence = sentence
         self.sentence_labels = sentence_labels
         self.labels = labels
+        self.ner_labels = ner_labels
         self.mode = mode
 
 class NERInputFeatures(object):
@@ -150,12 +151,11 @@ class NERInputFeatures(object):
         self.inv_label_map = inv_label_map
 
 class SCDataset(object):
-    # def __init__(self, texts, tags, label_list, preprocessor, preprocess, tokenizer):
-    def __init__(self, texts, tags, preprocessor, preprocess, tokenizer):
+    def __init__(self, texts, tags, ner_labels, preprocessor, preprocess, tokenizer):
 
         self.texts = texts
         self.tags = tags
-        self.ner_labels = ["B-LOC", "O", "B-ORG", "I-ORG", "B-PERS", "I-PERS", "I-LOC", "B-MISC", "I-MISC"]
+        self.ner_labels = ner_labels
         self.label_map = {label: i for i, label in enumerate(self.ner_labels)}
         self.inv_label_map = {i: label for i, label in enumerate(self.ner_labels)}
         self.preprocessor = preprocessor
@@ -166,15 +166,9 @@ class SCDataset(object):
         # Use cross entropy ignore_index as padding label id so that only
         # real label ids contribute to the loss later.
 
-    # def __len__(self):
-    #     return len(self.texts)
-    #
     def __getitem__(self, item):
         textlist = self.texts[item]
         tags = self.tags[item]
-        # textlist = self.texts
-        # tags = self.tags
-
         tokens = []
         annotated_tokens = []
         label_ids = []
@@ -194,13 +188,7 @@ class SCDataset(object):
                 tokens.extend(word_tokens)
                 annotated_tokens.extend(annotated_word_tokens)
                 # Use the real label id for the first token of the word, and padding ids for the remaining tokens
-                # if len(word_tokens) > 1:
-                    # tags = [self.pad_token_label_id] * (len(word_tokens))
-                    # tags[identify_bigger(word_tokens)] = self.label_map[label]
-                    # label_ids.extend(tags)
                 label_ids.extend([self.label_map[label]] + [self.pad_token_label_id] * (len(word_tokens) - 1))
-                # else:
-                #     label_ids.extend([self.label_map[label]] + [self.pad_token_label_id] * (len(word_tokens) - 1))
 
         # Account for [CLS] and [SEP] with "- 2" and with "- 3" for RoBERTa.
         special_tokens_count = self.TOKENIZER.num_special_tokens_to_add()
@@ -254,11 +242,11 @@ class SCDataset(object):
 
 
 class SecondSCDataset:
-    def __init__(self, texts, tags, preprocessor, preprocess, tokenizer):
+    def __init__(self, texts, tags, ner_labels,  preprocessor, preprocess, tokenizer):
 
         self.texts = texts
         self.tags = tags
-        self.ner_labels = ["B-LOC", "O", "B-ORG", "I-ORG", "B-PERS", "I-PERS", "I-LOC", "B-MISC", "I-MISC"]
+        self.ner_labels = ner_labels
         self.label_map = {label: i for i, label in enumerate(self.ner_labels)}
         self.inv_label_map = {i: label for i, label in enumerate(self.ner_labels)}
         self.preprocessor = preprocessor
