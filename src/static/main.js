@@ -224,6 +224,16 @@ var tasks = {
         attention_head_nr: 11,
         phaseLabels: basePhaseLabels,
         ner_labels: ['B-LOC', 'O', 'B-ORG', 'I-ORG', 'B-PERS', 'I-PERS', 'I-LOC', 'B-MISC', 'I-MISC']
+    },
+    english: {
+        file: NERCorp_test,
+        samples: null,
+        currentIndex: 0,
+        layer_nr: 12,
+        attention_layer_nr: 11,
+        attention_head_nr: 11,
+        phaseLabels: basePhaseLabels,
+        ner_labels: ['B-ORG', 'O', 'B-MISC', 'B-PER', 'I-PER', 'B-LOC', 'I-ORG', 'I-MISC', 'I-LOC']
     }
 };
 
@@ -598,8 +608,9 @@ function initialize_dropdown(model_name){
             'Content-Type': 'application/json'
         },
         dataType: 'json',
-        success: function (options) {
-            populate_dropdown(options.annotated_tokens);
+        success: function (data) {
+            populate_dropdown(data.annotated_tokens);
+            populate_tabs(data);
         },
         error: predictionError
     });
@@ -618,6 +629,19 @@ function populate_dropdown(options){
         el.value = opt;
         select.appendChild(el);
     }
+}
+
+function populate_tabs(data){
+    var tab1 = document.getElementById('squadTab');
+    var tab2 = document.getElementById('hotpotTab');
+    var tab3 = document.getElementById('babiTab');
+    var tab4 = document.getElementById('v2secibdTab');
+    var tab4 = document.getElementById('englishTab');
+    tab1.innerHTML = data.tab1 + " <a href='https://projector.tensorflow.org/?config=https://gist.githubusercontent.com/ay94/5e2cea01a94359a494cc120199bb5d98/raw/cf307e63ebbb40b526f45c1f4735326c1f389233/arabertv02_config.json'><span class='footnote-id'>[1]</span></a>";
+    tab2.innerHTML = data.tab2 + " <span class='footnote-id'>[2]</span></div>";
+    tab3.innerHTML = data.tab3 + " <span class='footnote-id'>[3]</span>";
+    tab4.innerHTML = data.tab4 + " <span class='footnote-id'>[4]</span>";
+    tab4.innerHTML = data.tab4 + " <span class='footnote-id'>[5]</span>";
 }
 
 function removeOptions(selectElement) {
@@ -903,8 +927,8 @@ function switchToHotpot() {
     $('#squadTab').removeClass('task-tab-active');
     $('#babiTab').removeClass('task-tab-active');
     $('#v2secibdTab').removeClass('task-tab-active');
+    $('#englishTab').removeClass('task-tab-active');
     reset_plots()
-
     if (!ownExample) {
         loadSamples();
     }
@@ -917,6 +941,7 @@ function switchToSquad() {
     $('#hotpotTab').removeClass('task-tab-active');
     $('#babiTab').removeClass('task-tab-active');
     $('#v2secibdTab').removeClass('task-tab-active');
+    $('#englishTab').removeClass('task-tab-active');
     reset_plots();
 
     if (!ownExample) {
@@ -931,8 +956,8 @@ function switchToBabi() {
     $('#hotpotTab').removeClass('task-tab-active');
     $('#babiTab').addClass('task-tab-active');
     $('#v2secibdTab').removeClass('task-tab-active');
+    $('#englishTab').removeClass('task-tab-active');
     reset_plots();
-
     if (!ownExample) {
         loadSamples();
     }
@@ -944,9 +969,23 @@ function switchTov2SecondToken() {
     $('#squadTab').removeClass('task-tab-active');
     $('#hotpotTab').removeClass('task-tab-active');
     $('#babiTab').removeClass('task-tab-active');
+    $('#englishTab').removeClass('task-tab-active');
     $('#v2secibdTab').addClass('task-tab-active');
     reset_plots();
+    if (!ownExample) {
+        loadSamples();
+    }
+}
 
+function switchToEnglish() {
+    currentTask = 'english';
+
+    $('#squadTab').removeClass('task-tab-active');
+    $('#hotpotTab').removeClass('task-tab-active');
+    $('#babiTab').removeClass('task-tab-active');
+    $('#v2secibdTab').removeClass('task-tab-active');
+    $('#englishTab').addClass('task-tab-active');
+    reset_plots();
     if (!ownExample) {
         loadSamples();
     }
