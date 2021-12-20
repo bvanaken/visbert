@@ -451,6 +451,7 @@ def get_labels_for_tokens(features, layers, focus):
 
 def run():
     parser = argparse.ArgumentParser()
+    print('change')
     parser.add_argument("base_folder", help="directory where model files are stored")
     parser.add_argument("data1_dir", help="directory where model files are stored")
     parser.add_argument("model1_name", help="the name of the first model")
