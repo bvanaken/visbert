@@ -1,5 +1,6 @@
 from collections import Counter
 
+import pandas as pd
 from transformers import BertModel, BertTokenizer, BertConfig
 from arabert.preprocess import ArabertPreprocessor
 from farasa.segmenter import FarasaSegmenter
@@ -30,10 +31,11 @@ model5 = None
 
 
 class BertNERModel:
-    def __init__(self,  model_name: str, model_file: str, data_path: str, tab_name: str, model_type: str, cache_dir: str, device: str = "cpu"):
+    def __init__(self,  model_name: str, model_file: str, data_path: str, error_path: str, tab_name: str, model_type: str, cache_dir: str, device: str = "cpu"):
         self.model_name = model_name
         self.model_file = model_file
         self.model_data = self.read_arabic_data(data_path)
+        self.model_error = self.read_error(error_path)
         self.model_labels = list(Counter([label for sentence in self.model_data for label in sentence[1]]).keys())
         self.tab_name = tab_name
         self.model_type = model_type
@@ -96,6 +98,10 @@ class BertNERModel:
                             label.append(splits[-1])
         return data
 
+    def read_error(self, path):
+        errors = pd.read_csv(path)
+        return errors
+
 
 def parse_model_output(ner_model, outputs,  sample, features):
         def softmax(x):
@@ -129,7 +135,7 @@ def identify_mistakes(gold, prediction):
             mistakes.append(f'Word ({i}) True: {t} -> Prediction: {p[0]}')
     return f'Number of mistakes: {len(mistakes)} Mistakes: {" # ".join(mistakes)}'
 
-def initialize_dropdown(sample, model_name):
+def initialize_dropdown(sample, sentence_id, model_name):
     flag = False
     if model_name == "squad":
         model = model1
@@ -148,7 +154,8 @@ def initialize_dropdown(sample, model_name):
         raise Exception
 
     input_features = tokenize(sample, model.tokenizer, model.preprocessor, flag=flag)
-    return input_features.annotated_tokens
+    agreement = model.model_error[model.model_error.sentence == f'sentence#{sentence_id}'].agreement.tolist()
+    return input_features.annotated_tokens, agreement
 
 def tokenize_and_predict(sample, model_name):
     flag = False
@@ -248,13 +255,6 @@ def compute_training_impact(model_name, features):
                                           model.preprocessor,
                                           features.tokens)
     impact_heatmap = training_impact.compute_similarity()
-    similarities = []
-    # for sentence in training_impact.data:
-    #
-    #     embedding_similarity = training_impact.compute_embedding_similarity(model.tokenizer.tokenize(model.preprocessor.preprocess(sentence)))
-    #     similarities.append(embedding_similarity)
-
-    # return impact_heatmap, similarities
     return impact_heatmap
 
 
@@ -529,53 +529,58 @@ def init(args):
     global model4
     global model5
 
-    # m1: BertNERModel = BertNERModel(
-    #     model_name=args.model1_name,
-    #     model_file=os.path.join(args.base_folder, args.model1_name),
-    #     data_path=os.path.join(args.base_folder, args.data1_dir),
-    #     tab_name=args.tab1_name,
-    #     model_type=args.model1_type,
-    #     cache_dir=os.path.join(args.base_folder, "tmp")
-    # )
-    # model1 = m1
-    # logger.debug(f"Finished loading {args.model1_name}")
+    m1: BertNERModel = BertNERModel(
+        model_name=args.model1_name,
+        model_file=os.path.join(args.base_folder, args.model1_name),
+        data_path=os.path.join(args.base_folder, args.data1_dir),
+        error_path=os.path.join(args.base_folder, args.model1_errors),
+        tab_name=args.tab1_name,
+        model_type=args.model1_type,
+        cache_dir=os.path.join(args.base_folder, "tmp")
+    )
+    model1 = m1
+    logger.debug(f"Finished loading {args.model1_name}")
 
-    # m2: BertNERModel = BertNERModel(
-    #     model_path=args.model_dir,
-    #     model_name=args.model2_name,
-    #     model_file=os.path.join(args.model_dir, args.model2_name),
-    #     tab_name=args.tab2_name,
-    #     model_type=args.model3_type,
-    #     cache_dir=os.path.join(args.model_dir, "tmp"),
-    #     num_tag=args.num_tag)
-    # model2 = m2
-    # logger.debug(f"Finished loading {args.model2_name}")
-    #
-    # m3: BertNERModel = BertNERModel(
-    #     model_path=args.model_dir,
-    #     model_name=args.model3_name,
-    #     model_file=os.path.join(args.model_dir, args.model3_name),
-    #     tab_name=args.tab3_name,
-    #     model_type=args.model1_type,
-    #     cache_dir=os.path.join(args.model_dir, "tmp"),
-    #     num_tag=args.num_tag)
-    # model3 = m3
-    # logger.debug(f"Finished loading {args.model3_name}")
-    #
-    # m4: BertNERModel = BertNERModel(
-    #     model_path=args.model_dir,
-    #     model_name=args.model4_name,
-    #     model_file=os.path.join(args.model_dir, args.model4_name),
-    #     tab_name=args.tab1_name,
-    #     model_type=args.model3_type,
-    #     cache_dir=os.path.join(args.model_dir, "tmp"),
-    #     num_tag=args.num_tag)
-    # model4 = m4
-    # logger.debug(f"Finished loading {args.model4_name}")
+    m2: BertNERModel = BertNERModel(
+        model_name=args.model2_name,
+        model_file=os.path.join(args.base_folder, args.model2_name),
+        data_path=os.path.join(args.base_folder, args.data1_dir),
+        error_path=os.path.join(args.base_folder, args.model2_errors),
+        tab_name=args.tab2_name,
+        model_type=args.model3_type,
+        cache_dir=os.path.join(args.base_folder, "tmp"),
+    )
+    model2 = m2
+    logger.debug(f"Finished loading {args.model2_name}")
+
+    m3: BertNERModel = BertNERModel(
+        model_name=args.model3_name,
+        model_file=os.path.join(args.base_folder, args.model3_name),
+        data_path=os.path.join(args.base_folder, args.data1_dir),
+        error_path=os.path.join(args.base_folder, args.model3_errors),
+        tab_name=args.tab3_name,
+        model_type=args.model1_type,
+        cache_dir=os.path.join(args.base_folder, "tmp"),
+    )
+    model3 = m3
+    logger.debug(f"Finished loading {args.model3_name}")
+
+    m4: BertNERModel = BertNERModel(
+        model_name=args.model4_name,
+        model_file=os.path.join(args.base_folder, args.model4_name),
+        data_path=os.path.join(args.base_folder, args.data1_dir),
+        error_path=os.path.join(args.base_folder, args.model4_errors),
+        tab_name=args.tab4_name,
+        model_type=args.model3_type,
+        cache_dir=os.path.join(args.base_folder, "tmp"),
+    )
+    model4 = m4
+    logger.debug(f"Finished loading {args.model4_name}")
     m5: BertNERModel = BertNERModel(
         model_name=args.model5_name,
         model_file=os.path.join(args.base_folder, args.model5_name),
         data_path=os.path.join(args.base_folder, args.data2_dir),
+        error_path=os.path.join(args.base_folder, args.model5_errors),
         tab_name=args.tab5_name,
         model_type=args.model4_type,
         cache_dir=os.path.join(args.base_folder, "tmp"),
