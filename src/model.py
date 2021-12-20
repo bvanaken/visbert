@@ -510,38 +510,38 @@ def init(args):
     model1 = m1
     logger.debug(f"Finished loading {args.model1_name}")
 
-    m2: BertNERModel = BertNERModel(
-        model_path=args.model_dir,
-        model_name=args.model2_name,
-        model_file=os.path.join(args.model_dir, args.model2_name),
-        tab_name=args.tab2_name,
-        model_type=args.model3_type,
-        cache_dir=os.path.join(args.model_dir, "tmp"),
-        num_tag=args.num_tag)
-    model2 = m2
-    logger.debug(f"Finished loading {args.model2_name}")
-
-    m3: BertNERModel = BertNERModel(
-        model_path=args.model_dir,
-        model_name=args.model3_name,
-        model_file=os.path.join(args.model_dir, args.model3_name),
-        tab_name=args.tab3_name,
-        model_type=args.model1_type,
-        cache_dir=os.path.join(args.model_dir, "tmp"),
-        num_tag=args.num_tag)
-    model3 = m3
-    logger.debug(f"Finished loading {args.model3_name}")
-
-    m4: BertNERModel = BertNERModel(
-        model_path=args.model_dir,
-        model_name=args.model4_name,
-        model_file=os.path.join(args.model_dir, args.model4_name),
-        tab_name=args.tab1_name,
-        model_type=args.model3_type,
-        cache_dir=os.path.join(args.model_dir, "tmp"),
-        num_tag=args.num_tag)
-    model4 = m4
-    logger.debug(f"Finished loading {args.model4_name}")
+    # m2: BertNERModel = BertNERModel(
+    #     model_path=args.model_dir,
+    #     model_name=args.model2_name,
+    #     model_file=os.path.join(args.model_dir, args.model2_name),
+    #     tab_name=args.tab2_name,
+    #     model_type=args.model3_type,
+    #     cache_dir=os.path.join(args.model_dir, "tmp"),
+    #     num_tag=args.num_tag)
+    # model2 = m2
+    # logger.debug(f"Finished loading {args.model2_name}")
+    #
+    # m3: BertNERModel = BertNERModel(
+    #     model_path=args.model_dir,
+    #     model_name=args.model3_name,
+    #     model_file=os.path.join(args.model_dir, args.model3_name),
+    #     tab_name=args.tab3_name,
+    #     model_type=args.model1_type,
+    #     cache_dir=os.path.join(args.model_dir, "tmp"),
+    #     num_tag=args.num_tag)
+    # model3 = m3
+    # logger.debug(f"Finished loading {args.model3_name}")
+    #
+    # m4: BertNERModel = BertNERModel(
+    #     model_path=args.model_dir,
+    #     model_name=args.model4_name,
+    #     model_file=os.path.join(args.model_dir, args.model4_name),
+    #     tab_name=args.tab1_name,
+    #     model_type=args.model3_type,
+    #     cache_dir=os.path.join(args.model_dir, "tmp"),
+    #     num_tag=args.num_tag)
+    # model4 = m4
+    # logger.debug(f"Finished loading {args.model4_name}")
 
     # squad_model_file = os.path.join(model_dir, "arabertv2_ner.bin")
     # # babi_model_file = os.path.join(model_dir, "babi.bin")
