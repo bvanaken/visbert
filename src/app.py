@@ -44,6 +44,7 @@ def image(filename):
 def initialize_dropdown():
     data = request.get_json()
     model_name = data['model_name']
+    sentence_id = decode_text(data["id"])
     sentence = decode_text(data["sentence"])
     labels = decode_text(data["labels"])
     mode = decode_text(data["mode"])
@@ -56,14 +57,15 @@ def initialize_dropdown():
                      ner_labels=ner_labels,
                      mode=mode)
 
-    annotated_tokens = model.initialize_dropdown(data, model_name)
+    annotated_tokens, agreement = model.initialize_dropdown(data, sentence_id, model_name)
     output = {
         'annotated_tokens': annotated_tokens.tolist(),
-        # 'tab1': model.model1.tab_name,
-        # 'tab2': model.model2.tab_name,
-        # 'tab3': model.model3.tab_name,
-        # 'tab4': model.model4.tab_name,
+        'tab1': model.model1.tab_name,
+        'tab2': model.model2.tab_name,
+        'tab3': model.model3.tab_name,
+        'tab4': model.model4.tab_name,
         'tab5': model.model5.tab_name,
+        'agreement': agreement
     }
 
     return jsonify(output)
@@ -458,6 +460,11 @@ def run():
     parser.add_argument("base_folder", help="Base Directory")
     parser.add_argument("data1_dir", help="ANERCorp Directory")
     parser.add_argument("data2_dir", help="NERCorp Directory")
+    parser.add_argument("model1_errors", help="First Model Errors")
+    parser.add_argument("model2_errors", help="Second Model Errors")
+    parser.add_argument("model3_errors", help="Third Model Errors")
+    parser.add_argument("model4_errors", help="Fourth Model Errors")
+    parser.add_argument("model5_errors", help="Fifth Model Errors")
     parser.add_argument("model1_name", help="First Model Name")
     parser.add_argument("model2_name", help="Second Model Name")
     parser.add_argument("model3_name", help="Third Model Name")
