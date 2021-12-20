@@ -25,6 +25,7 @@ model1 = None
 model2 = None
 model3 = None
 model4 = None
+model5 = None
 
 
 
@@ -43,7 +44,10 @@ class BertNERModel:
         self.model = self.load_model()
         self.ner_model, self.pretrained_ner_model = self.load_ner_model()
         self.tokenizer = self.load_tokenizer()
-        self.preprocessor = self.load_preprocessor()
+        if 'aubmindlab' in self.model_type:
+            self.preprocessor = self.load_preprocessor()
+        else:
+            self.preprocessor = None
 
     def load_model(self):
         start_time = current_milli_time()
@@ -125,9 +129,6 @@ def identify_mistakes(gold, prediction):
             mistakes.append(f'Word ({i}) True: {t} -> Prediction: {p[0]}')
     return f'Number of mistakes: {len(mistakes)} Mistakes: {" # ".join(mistakes)}'
 
-
-
-
 def initialize_dropdown(sample, model_name):
     flag = False
     if model_name == "squad":
@@ -136,14 +137,17 @@ def initialize_dropdown(sample, model_name):
         model = model2
     elif model_name == "babi":
         model = model3
-        flag = True
+        flag = 'second'
     elif model_name == "v2SecondToken":
         model = model4
-        flag = True
+        flag = 'second'
+    elif model_name == "english":
+        model = model5
+        flag = 'english'
     else:
         raise Exception
 
-    input_features = tokenize(sample, model.tokenizer, model.preprocessor, flag= flag)
+    input_features = tokenize(sample, model.tokenizer, model.preprocessor, flag=flag)
     return input_features.annotated_tokens
 
 def tokenize_and_predict(sample, model_name):
@@ -154,10 +158,13 @@ def tokenize_and_predict(sample, model_name):
         model = model2
     elif model_name == "babi":
         model = model3
-        flag = True
+        flag = 'second'
     elif model_name == "v2SecondToken":
         model = model4
-        flag = True
+        flag = 'second'
+    elif model_name == "english":
+        model = model5
+        flag = 'english'
     else:
         raise Exception
 
@@ -187,13 +194,22 @@ def tokenize_and_predict(sample, model_name):
 
 
 def tokenize(input_sample, tokenizer, preprocessor, flag = False):
-    if flag:
+    if flag == 'second':
         features_processing = SecondSCDataset(
             texts=[input_sample.sentence],
             tags=[input_sample.labels],
             ner_labels=input_sample.ner_labels,
             preprocessor=preprocessor,
             preprocess=True,
+            tokenizer=tokenizer)
+
+    elif flag == 'english':
+        features_processing = SCDataset(
+            texts=[input_sample.sentence],
+            tags=[input_sample.labels],
+            ner_labels=input_sample.ner_labels,
+            preprocessor=preprocessor,
+            preprocess=False,
             tokenizer=tokenizer)
     else:
         features_processing = SCDataset(
@@ -215,10 +231,13 @@ def compute_training_impact(model_name, features):
         model = model2
     elif model_name == "babi":
         model = model3
-        flag = True
+        flag = 'second'
     elif model_name == "v2SecondToken":
         model = model4
-        flag = True
+        flag = 'second'
+    elif model_name == "english":
+        model = model5
+        flag = 'english'
     else:
         raise Exception
     training_impact = AttentionSimilarity(model.model_data,
@@ -230,13 +249,13 @@ def compute_training_impact(model_name, features):
                                           features.tokens)
     impact_heatmap = training_impact.compute_similarity()
     similarities = []
-    for sentence in training_impact.data:
+    # for sentence in training_impact.data:
+    #
+    #     embedding_similarity = training_impact.compute_embedding_similarity(model.tokenizer.tokenize(model.preprocessor.preprocess(sentence)))
+    #     similarities.append(embedding_similarity)
 
-        embedding_similarity = training_impact.compute_embedding_similarity(model.tokenizer.tokenize(model.preprocessor.preprocess(sentence)))
-        similarities.append(embedding_similarity)
-
-    return impact_heatmap, similarities
-
+    # return impact_heatmap, similarities
+    return impact_heatmap
 
 
 class AttentionSimilarity:
@@ -453,7 +472,11 @@ class AttentionSimilarity:
             # index of the sentence = i zero to access the word list and 480 is the max length
             data = sample(self.data, self.sample_size)
             sentence_a = ' '.join(data[i][0])
-            inputs = self.tokenizer.encode_plus(self.preprocessor.preprocess(sentence_a), return_tensors='pt', add_special_tokens=True)
+
+            if self.preprocessor == None:
+                inputs = self.tokenizer.encode_plus(sentence_a, return_tensors='pt',  add_special_tokens=True)
+            else:
+                inputs = self.tokenizer.encode_plus(self.preprocessor.preprocess(sentence_a), return_tensors='pt', add_special_tokens=True)
             token_type_ids = inputs['token_type_ids']
             input_ids = inputs['input_ids']
 
@@ -504,17 +527,18 @@ def init(args):
     global model2
     global model3
     global model4
+    global model5
 
-    m1: BertNERModel = BertNERModel(
-        model_name=args.model1_name,
-        model_file=os.path.join(args.base_folder, args.model1_name),
-        data_path=os.path.join(args.base_folder, args.data1_dir),
-        tab_name=args.tab1_name,
-        model_type=args.model1_type,
-        cache_dir=os.path.join(args.base_folder, "tmp")
-    )
-    model1 = m1
-    logger.debug(f"Finished loading {args.model1_name}")
+    # m1: BertNERModel = BertNERModel(
+    #     model_name=args.model1_name,
+    #     model_file=os.path.join(args.base_folder, args.model1_name),
+    #     data_path=os.path.join(args.base_folder, args.data1_dir),
+    #     tab_name=args.tab1_name,
+    #     model_type=args.model1_type,
+    #     cache_dir=os.path.join(args.base_folder, "tmp")
+    # )
+    # model1 = m1
+    # logger.debug(f"Finished loading {args.model1_name}")
 
     # m2: BertNERModel = BertNERModel(
     #     model_path=args.model_dir,
@@ -548,4 +572,14 @@ def init(args):
     #     num_tag=args.num_tag)
     # model4 = m4
     # logger.debug(f"Finished loading {args.model4_name}")
+    m5: BertNERModel = BertNERModel(
+        model_name=args.model5_name,
+        model_file=os.path.join(args.base_folder, args.model5_name),
+        data_path=os.path.join(args.base_folder, args.data2_dir),
+        tab_name=args.tab5_name,
+        model_type=args.model4_type,
+        cache_dir=os.path.join(args.base_folder, "tmp"),
+    )
+    model5 = m5
+    logger.debug(f"Finished loading {args.model5_name}")
 
