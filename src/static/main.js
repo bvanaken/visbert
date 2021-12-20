@@ -1,9 +1,9 @@
-var testing_data = "./static/testing_data.json";
-var hotpotExampleFile = "./static/hotpot_examples.json";
-var babiExampleFile = "./static/babi_examples.json";
+var ANERCorp_test = "./static/ANERCorp_test.json";
+var NERCorp_test = "./static/NERCorp_test.json";
+var NewsWire_test = "./static/NewsWire_test.json";
+var Wikipedia_test = "./static/Wikipedia_test.json";
 
 var color = Chart.helpers.color;
-
 var fontDefault = {
     size: 13,
     weight: 'normal',
@@ -17,7 +17,6 @@ var fontHighlighted = {
     size: 16,
     weight: 'bold'
 };
-
 
 var scatterChartData = {
     datasets: [
@@ -80,7 +79,6 @@ var scatterChartData = {
     ]
 };
 
-
 var scatterChartHeadData = {
     datasets: [
         {
@@ -142,27 +140,11 @@ var scatterChartHeadData = {
     ]
 };
 
-
 var phase1 = "Phase 1: Topical / Word Clusters";
 var phase2 = "Phase 2: Entity Relation Clusters";
 var phase3 = "Phase 3: Matching Supporting Facts with Question";
 var phase4 = "Phase 4: Answer Extraction";
-//TODO change these phases into something meaningful NE related
-var basePhaseLabels = {
-    0: phase1,
-    1: phase1,
-    2: phase1,
-    3: phase1 + " → " + phase2,
-    4: phase2,
-    5: phase2,
-    6: phase2 + " → " + phase3,
-    7: phase3,
-    8: phase3,
-    9: phase3 + " → " + phase4,
-    10: phase4,
-    11: phase4,
-    12: phase4
-};
+var color_map = {"B-LOC": "green", "I-LOC":"green", "B-PERS":"deepskyblue","I-PERS":"deepskyblue","B-PER":"deepskyblue","I-PER":"deepskyblue", "B-ORG":"darkcyan","I-ORG":"darkcyan","B-MISC":"palevioletred","I-MISC":"palevioletred","O":"saddlebrown"};
 var hiddenStates = [];
 var annotated_hiddenStates = [];
 var attention_head = [];
@@ -186,10 +168,25 @@ var similarity_data = [];
 var head_similarity_data;
 var embedding_similarity = [];
 
+var basePhaseLabels = {
+    0: phase1,
+    1: phase1,
+    2: phase1,
+    3: phase1 + " → " + phase2,
+    4: phase2,
+    5: phase2,
+    6: phase2 + " → " + phase3,
+    7: phase3,
+    8: phase3,
+    9: phase3 + " → " + phase4,
+    10: phase4,
+    11: phase4,
+    12: phase4
+};
 
 var tasks = {
     squad: {
-        file: testing_data,
+        file: ANERCorp_test,
         samples: null,
         currentIndex: 0,
         layer_nr: 12,
@@ -199,7 +196,7 @@ var tasks = {
         phaseLabels: basePhaseLabels
     },
     babi: {
-        file: testing_data,
+        file: ANERCorp_test,
         samples: null,
         currentIndex: 0,
         layer_nr: 12,
@@ -208,7 +205,7 @@ var tasks = {
         phaseLabels: basePhaseLabels
     },
     hotpot: {
-        file: testing_data,
+        file: ANERCorp_test,
         samples: null,
         currentIndex: 0,
         layer_nr: 12,
@@ -217,7 +214,7 @@ var tasks = {
         phaseLabels: basePhaseLabels
     },
     v2SecondToken: {
-        file: testing_data,
+        file: ANERCorp_test,
         samples: null,
         currentIndex: 0,
         layer_nr: 12,
@@ -226,8 +223,6 @@ var tasks = {
         phaseLabels: basePhaseLabels
     }
 };
-
-var color_map = {"B-LOC": "green", "I-LOC":"green", "B-PERS":"deepskyblue","I-PERS":"deepskyblue","B-ORG":"darkcyan","I-ORG":"darkcyan","B-MISC":"palevioletred","I-MISC":"palevioletred","O":"saddlebrown"};
 
 function findMinMax(data) {
     var minX = 1000000000;
@@ -253,22 +248,40 @@ function findMinMax(data) {
     return [minX, maxX, minY, maxY]
 }
 
-function adjustSlider(nr_layers) {
-    $("#layer-nr-slider").attr("max", nr_layers);
-    $("#layer_max").text(nr_layers);
+function updateZoomAndPan(minX, maxX, minY, maxY) {
+    var xAxis = scatterPlot.options.scales.xAxes[0];
+    var yAxis = scatterPlot.options.scales.yAxes[0];
+
+    xAxis.ticks.min = minX;
+    xAxis.ticks.max = maxX;
+    yAxis.ticks.min = minY;
+    yAxis.ticks.max = maxY;
+
+    scatterPlot.options.pan.rangeMin = {x: minX, y: minY};
+    scatterPlot.options.pan.rangeMax = {x: maxX, y: maxY};
+
+    scatterPlot.options.zoom.rangeMin = {x: minX, y: minY};
+    scatterPlot.options.zoom.rangeMax = {x: maxX, y: maxY};
 }
 
-function toggleOwnExample() {
-    // toggle
-    ownExample = !ownExample;
+function updateHeadZoomAndPan(minX, maxX, minY, maxY) {
+    var xAxis = scatterHeadPlot.options.scales.xAxes[0];
+    var yAxis = scatterHeadPlot.options.scales.yAxes[0];
 
-    if (ownExample) {
-        removeSample();
+    xAxis.ticks.min = minX;
+    xAxis.ticks.max = maxX;
+    yAxis.ticks.min = minY;
+    yAxis.ticks.max = maxY;
 
-    } else {
-        loadSamples()
-    }
+    scatterHeadPlot.options.pan.rangeMin = {x: minX, y: minY};
+    scatterHeadPlot.options.pan.rangeMax = {x: maxX, y: maxY};
+
+    scatterHeadPlot.options.zoom.rangeMin = {x: minX, y: minY};
+    scatterHeadPlot.options.zoom.rangeMax = {x: maxX, y: maxY};
 }
+
+// Refresh ScatterPlot
+
 function refreshData(newData, newAnnotatedData, scatterPlot) {
 
     var minMaxPoints = findMinMax(newData);
@@ -280,7 +293,6 @@ function refreshData(newData, newAnnotatedData, scatterPlot) {
     minMaxPoints[3] += 2;
 
     updateZoomAndPan(minMaxPoints[0], minMaxPoints[1], minMaxPoints[2], minMaxPoints[3]);
-//    TODO this is the get token label function where each category gets the corresponding locations ready to slice the data points and pass that information into scatterChartData which we need to update to match our tags
 
     scatterChartData.datasets[0].data = newAnnotatedData.loc_points;
     scatterChartData.datasets[1].data = newAnnotatedData.org_points;
@@ -305,7 +317,6 @@ function refreshHeadData(newData, newAnnotatedData, scatterPlot) {
     minMaxPoints[3] += 0.02;
 
     updateHeadZoomAndPan(minMaxPoints[0], minMaxPoints[1], minMaxPoints[2], minMaxPoints[3]);
-//    TODO this is the get token label function where each category gets the corresponding locations ready to slice the data points and pass that information into scatterChartData which we need to update to match our tags
 
     scatterChartHeadData.datasets[0].data = newAnnotatedData.loc_points;
     scatterChartHeadData.datasets[1].data = newAnnotatedData.org_points;
@@ -317,6 +328,8 @@ function refreshHeadData(newData, newAnnotatedData, scatterPlot) {
 
     scatterPlot.update();
 }
+
+//Refresh BarchartPlot
 
 function plot_logits(logits, predictionPlot){
         predictionPlot.data.labels = logits.labels;
@@ -351,7 +364,6 @@ function compute_embedding_similarity(embedding_similarity, embeddingSimilarityP
         embeddingSimilarityPlot.update();
 }
 
-
 function generate_attention_summary(data, Plot1, Plot2, color1, color2, label1, label2, title){
     Plot1.data.labels = data.labels
     Plot1.data.datasets[0].data = data.analysis1
@@ -375,6 +387,70 @@ function generate_attention_summary(data, Plot1, Plot2, color1, color2, label1, 
 
 }
 
+function compute_similarity(similarity_data, SimilarityPlot, measure = 'similarity'){
+        SimilarityPlot.data.labels = similarity_data.labels;
+        if (measure == 'similarity'){
+            SimilarityPlot.data.datasets[0].data = similarity_data.similarity;
+        }
+        else{
+            SimilarityPlot.data.datasets[0].data = similarity_data.distance;
+        }
+
+        var background = []
+        for (element of similarity_data.labels){
+               background.push(color_map[element.split('_')[2]])
+          }
+        SimilarityPlot.data.datasets[0].backgroundColor = background
+        SimilarityPlot.update()
+}
+
+function compute_head_similarity(head_similarity_data, HeadSimilarityPlot, measure = 'similarity'){
+        HeadSimilarityPlot.data.labels = head_similarity_data.labels;
+        if (measure == 'similarity'){
+            HeadSimilarityPlot.data.datasets[0].data = head_similarity_data.similarity;
+        }
+        else{
+            HeadSimilarityPlot.data.datasets[0].data = head_similarity_data.distance;
+        }
+
+        var background = []
+        for (element of head_similarity_data.labels){
+               background.push(color_map[element.split('_')[2]])
+          }
+        HeadSimilarityPlot.data.datasets[0].backgroundColor = background
+        HeadSimilarityPlot.update()
+}
+
+// Control Barchart View
+function change_measure(){
+    measure = parseText($('#similarity_measure'));
+    compute_similarity(similarity_data[currentLayer], SimilarityPlot, measure)
+    compute_head_similarity(head_similarity_data, HeadSimilarityPlot, measure)
+}
+
+function change_analysis(){
+
+    var skillsSelect = document.getElementById("change_attention_analysis");
+    var selectedText = skillsSelect.options[skillsSelect.selectedIndex].text;
+    if (selectedText == 'produce_receive'){
+        generate_attention_summary(attention_summary, Plot1, Plot2, 'palevioletred', 'saddlebrown', 'Produce', 'Receive', 'The amount of attention each prediction token produce/receive');
+     }
+     else{
+        generate_attention_summary(local_global, Plot1, Plot2, 'darkcyan', 'deepskyblue', 'Local', 'Global', 'The amount of local/global attention each prediction token produce');
+     }
+}
+
+function change_plot_view(){
+
+    var skillsSelect = document.getElementById("choose_view");
+    var selectedText = skillsSelect.options[skillsSelect.selectedIndex].text;
+    if (selectedText == 'attention_head'){
+        $("#attention_heat").html(attention_heat);
+     }
+     else{
+        $("#attention_heat").html(change_heatmap);
+     }
+}
 
 function reset_plots(){
         predictionPlot.data.labels = [];
@@ -429,74 +505,64 @@ function reset_plots(){
         scatterPlot.update();
         scatterHeadPlot.update();
         SimilarityPlot.update();
+        Plot1.update();
+        Plot2.update();
         HeadSimilarityPlot.update();
-
 }
 
-function compute_similarity(similarity_data, SimilarityPlot, measure = 'similarity'){
-        SimilarityPlot.data.labels = similarity_data.labels;
-        if (measure == 'similarity'){
-            SimilarityPlot.data.datasets[0].data = similarity_data.similarity;
-        }
-        else{
-            SimilarityPlot.data.datasets[0].data = similarity_data.distance;
-        }
-
-        var background = []
-        for (element of similarity_data.labels){
-               background.push(color_map[element.split('_')[2]])
+// Sample Functions
+function insertSample(sample) {
+    var dict = {"B-LOC": "green", "I-LOC":"green", "B-PERS":"deepskyblue","I-PERS":"deepskyblue","B-ORG":"darkcyan","I-ORG":"darkcyan","B-MISC":"palevioletred","I-MISC":"palevioletred","O":"saddlebrown"}
+    $('#id-input').prop('disabled', false);
+    $('#id-input').val(sample.sentence_number);
+    $('#sentence').val(sample.sentence);
+    gold_standard = ''
+    count = 0
+    for (element of sample.labels){
+                   gold_standard+= "Word ("+count + ") : " + element
+                   gold_standard+=" # "
+                   count++;
           }
-        SimilarityPlot.data.datasets[0].backgroundColor = background
-        SimilarityPlot.update()
-}
-
-
-function compute_head_similarity(head_similarity_data, HeadSimilarityPlot, measure = 'similarity'){
-        HeadSimilarityPlot.data.labels = head_similarity_data.labels;
-        if (measure == 'similarity'){
-            HeadSimilarityPlot.data.datasets[0].data = head_similarity_data.similarity;
-        }
-        else{
-            HeadSimilarityPlot.data.datasets[0].data = head_similarity_data.distance;
-        }
-
-        var background = []
-        for (element of head_similarity_data.labels){
-               background.push(color_map[element.split('_')[2]])
+    $('#gold_standard').val(gold_standard);
+    $('#sentence_labels').text(sample.sentence_labels);
+    $('#sentence_labels').addClass('goldstandard-highlighted');
+    initialize_dropdown(currentTask)
+    var res = "";
+     var text = document.getElementById("sentence_labels").innerHTML;
+     var split_text = text.split(" ")
+     for (element of split_text){
+                   res+= "<span style='color:"+dict[element.split("_")[1]]+"'>" +element.split("_")[0]+ "</span>";
+                   res+=" "
           }
-        HeadSimilarityPlot.data.datasets[0].backgroundColor = background
-        HeadSimilarityPlot.update()
+    document.getElementById("sentence_labels").innerHTML = res;
+    var task = tasks[currentTask];
+    if (task.currentIndex === 0) {
+        $('#id-switcher-left').addClass("id-switcher-label-inactive");
+    } else {
+        $('#id-switcher-left').removeClass('id-switcher-label-inactive');
+    }
+    if (task.currentIndex >= task.samples.length - 1) {
+        $('#id-switcher-right').addClass('id-switcher-label-inactive');
+    } else {
+        $('#id-switcher-right').removeClass('id-switcher-label-inactive');
+    }
 }
 
-function change_measure(){
-    measure = parseText($('#similarity_measure'));
-    compute_similarity(similarity_data[currentLayer], SimilarityPlot, measure)
-    compute_head_similarity(head_similarity_data, HeadSimilarityPlot, measure)
+function removeSample() {
+    $('#id-input').prop('disabled', true);
+    $('#sentence').val("");
+    $('#gold_standard').val("");
+    $('#sentence_labels').text("");
+    $('#sentence_labels').removeClass('goldstandard-highlighted');
+    $('predicted-labels').text("");
+    removeOptions(document.getElementById('focus'));
+
+
+    $('#id-switcher-right').addClass('id-switcher-label-inactive');
+    $('#id-switcher-left').addClass('id-switcher-label-inactive');
 }
 
-function change_analysis(){
-
-    var skillsSelect = document.getElementById("change_attention_analysis");
-    var selectedText = skillsSelect.options[skillsSelect.selectedIndex].text;
-    if (selectedText == 'produce_receive'){
-        generate_attention_summary(attention_summary, Plot1, Plot2, 'palevioletred', 'saddlebrown', 'Produce', 'Receive', 'The amount of attention each prediction token produce/receive');
-     }
-     else{
-        generate_attention_summary(local_global, Plot1, Plot2, 'darkcyan', 'deepskyblue', 'Local', 'Global', 'The amount of local/global attention each prediction token produce');
-     }
-}
-
-function change_plot_view(){
-
-    var skillsSelect = document.getElementById("choose_view");
-    var selectedText = skillsSelect.options[skillsSelect.selectedIndex].text;
-    if (selectedText == 'attention_head'){
-        $("#attention_heat").html(attention_heat);
-     }
-     else{
-        $("#attention_heat").html(change_heatmap);
-     }
-}
+// Dropdown Functions
 
 function initialize_dropdown(model_name){
     removeOptions(document.getElementById('focus'));
@@ -524,6 +590,7 @@ function initialize_dropdown(model_name){
     });
 
 }
+
 function change_dropdown(){
         initialize_dropdown(currentTask)
 }
@@ -538,104 +605,11 @@ function populate_dropdown(options){
     }
 }
 
-
-function updateZoomAndPan(minX, maxX, minY, maxY) {
-    var xAxis = scatterPlot.options.scales.xAxes[0];
-    var yAxis = scatterPlot.options.scales.yAxes[0];
-
-    xAxis.ticks.min = minX;
-    xAxis.ticks.max = maxX;
-    yAxis.ticks.min = minY;
-    yAxis.ticks.max = maxY;
-
-    scatterPlot.options.pan.rangeMin = {x: minX, y: minY};
-    scatterPlot.options.pan.rangeMax = {x: maxX, y: maxY};
-
-    scatterPlot.options.zoom.rangeMin = {x: minX, y: minY};
-    scatterPlot.options.zoom.rangeMax = {x: maxX, y: maxY};
-}
-
-function updateHeadZoomAndPan(minX, maxX, minY, maxY) {
-    var xAxis = scatterHeadPlot.options.scales.xAxes[0];
-    var yAxis = scatterHeadPlot.options.scales.yAxes[0];
-
-    xAxis.ticks.min = minX;
-    xAxis.ticks.max = maxX;
-    yAxis.ticks.min = minY;
-    yAxis.ticks.max = maxY;
-
-    scatterHeadPlot.options.pan.rangeMin = {x: minX, y: minY};
-    scatterHeadPlot.options.pan.rangeMax = {x: maxX, y: maxY};
-
-    scatterHeadPlot.options.zoom.rangeMin = {x: minX, y: minY};
-    scatterHeadPlot.options.zoom.rangeMax = {x: maxX, y: maxY};
-}
-
-function insertSample(sample) {
-    var dict = {"B-LOC": "green", "I-LOC":"green", "B-PERS":"deepskyblue","I-PERS":"deepskyblue","B-ORG":"darkcyan","I-ORG":"darkcyan","B-MISC":"palevioletred","I-MISC":"palevioletred","O":"saddlebrown"}
-    $('#id-input').prop('disabled', false);
-    $('#id-input').val(sample.sentence_number);
-    $('#sentence').val(sample.sentence);
-    gold_standard = ''
-    count = 0
-    for (element of sample.labels){
-                   gold_standard+= "Word ("+count + ") : " + element
-                   gold_standard+=" # "
-                   count++;
-          }
-    $('#gold_standard').val(gold_standard);
-    $('#sentence_labels').text(sample.sentence_labels);
-    $('#sentence_labels').addClass('goldstandard-highlighted');
-    initialize_dropdown(currentTask)
-//    populate_dropdwon(sample.tokens)
-    var res = "";
-     var text = document.getElementById("sentence_labels").innerHTML;
-     var split_text = text.split(" ")
-     for (element of split_text){
-                   res+= "<span style='color:"+dict[element.split("_")[1]]+"'>" +element.split("_")[0]+ "</span>";
-                   res+=" "
-          }
-    document.getElementById("sentence_labels").innerHTML = res;
-
-
-
-
-    var task = tasks[currentTask];
-
-    if (task.currentIndex === 0) {
-        $('#id-switcher-left').addClass("id-switcher-label-inactive");
-
-    } else {
-        $('#id-switcher-left').removeClass('id-switcher-label-inactive');
-    }
-
-    if (task.currentIndex >= task.samples.length - 1) {
-        $('#id-switcher-right').addClass('id-switcher-label-inactive');
-    } else {
-        $('#id-switcher-right').removeClass('id-switcher-label-inactive');
-    }
-
-}
-
 function removeOptions(selectElement) {
    var i, L = selectElement.options.length - 1;
    for(i = L; i >= 0; i--) {
       selectElement.remove(i);
    }
-}
-
-function removeSample() {
-    $('#id-input').prop('disabled', true);
-    $('#sentence').val("");
-    $('#gold_standard').val("");
-    $('#sentence_labels').text("");
-    $('#sentence_labels').removeClass('goldstandard-highlighted');
-    $('predicted-labels').text("");
-    removeOptions(document.getElementById('focus'));
-
-
-    $('#id-switcher-right').addClass('id-switcher-label-inactive');
-    $('#id-switcher-left').addClass('id-switcher-label-inactive');
 }
 
 function parseText(component) {
@@ -676,8 +650,10 @@ function change_mode(){
 }
 
 
-function processResult(data) {
 
+// Request Functions
+
+function processResult(data) {
     mistakes = data.mistakes;
     predictedAnswer = data.predicted_tags;
     var tokens = data.tokens;
@@ -687,11 +663,11 @@ function processResult(data) {
     annotated_hiddenStates = data.annotated_hidden_states;
     attentionHeads = data.attentions_heads;
     annotated_attentionHeads = data.annotated_heads;
+
     var analysisSelect = document.getElementById("change_attention_analysis");
     var analysis = analysisSelect.options[analysisSelect.selectedIndex].text;
     var viewSelect = document.getElementById("choose_view");
     var view = viewSelect.options[viewSelect.selectedIndex].text;
-
 
     currentLayer = Math.min(tasks[currentTask].layer_nr, currentLayer);
     currentHeadLayer = Math.min(tasks[currentTask].attention_layer_nr, currentHeadLayer);
@@ -703,8 +679,6 @@ function processResult(data) {
     refreshData(hiddenStates[currentLayer], annotated_hiddenStates[currentLayer], scatterPlot);
     refreshHeadData(attentionHeads[currentHeadLayer][currentHead], annotated_attentionHeads[currentHeadLayer][currentHead], scatterHeadPlot);
 
-
-
      plot_logits(predictedAnswer[currentLayer], predictionPlot);
      compute_focus_logits(focus_data[currentLayer], layerByLayerPlot);
      compute_similarity(similarity_data[currentLayer], SimilarityPlot);
@@ -712,26 +686,9 @@ function processResult(data) {
     $('#button-spinner').hide();
     $('#attention_button_spinner').hide();
     $('#impact_button_spinner').hide();
-
-}
-
-
-
-
-
-
-
-function predictionError() {
-    var errorMessage = "\< Prediction not possible \>";
-    $('#predicted-answer').text(errorMessage);
-
-    $('#button-spinner').hide();
-    $('#attention_button_spinner').hide();
-    $('#impact_button_spinner').hide();
 }
 
 function requestPredictionAndVis() {
-
     $('#button-spinner').show();
     $('#attention_button_spinner').show();
     $('#impact_button_spinner').show();
@@ -744,7 +701,6 @@ function requestPredictionAndVis() {
     sample.gold_standard = parseText($('#gold_standard'));
     sample.random = parseText($('#random'));
     sample.mode = parseText($('#mode'));
-
 
     sample.attention_layer = currentAttentionLayer
     sample.attention_head = currentAttentionHead
@@ -768,6 +724,14 @@ function requestPredictionAndVis() {
     });
 }
 
+function predictionError() {
+    var errorMessage = "\< Prediction not possible \>";
+    $('#predicted-answer').text(errorMessage);
+
+    $('#button-spinner').hide();
+    $('#attention_button_spinner').hide();
+    $('#impact_button_spinner').hide();
+}
 
 function processImpact(data) {
 
@@ -778,12 +742,9 @@ function processImpact(data) {
     $('#attention_button_spinner').hide();
     $('#impact_button_spinner').hide();
     $("#choose_view").val("training_impact");
-
 }
 
-
 function requestImpact() {
-
     $('#button-spinner').show();
     $('#attention_button_spinner').show();
     $('#impact_button_spinner').show();
@@ -816,7 +777,6 @@ function requestImpact() {
 
 function processAttention(data) {
 
-
     attention_heat = data.attention_heat
     attention_summary = data.attention_summary
     local_global = data.local_global
@@ -848,7 +808,6 @@ function processAttention(data) {
 
 
 }
-
 
 function requestAttention(){
 
@@ -885,6 +844,7 @@ function requestAttention(){
     });
 }
 
+// Sample Related Functions
 
 function loadSamples() {
     var task = tasks[currentTask];
@@ -900,6 +860,18 @@ function loadSamples() {
     }
 }
 
+function toggleOwnExample() {
+    // toggle
+    ownExample = !ownExample;
+
+    if (ownExample) {
+        removeSample();
+
+    } else {
+        loadSamples()
+    }
+}
+
 function get_sample(){
     var task = tasks[currentTask];
 
@@ -909,10 +881,7 @@ function get_sample(){
             task.currentIndex = sample_id
             insertSample(task.samples[task.currentIndex]);
     }
-
-
 }
-
 
 function switchToHotpot() {
     currentTask = 'hotpot';
@@ -989,6 +958,11 @@ function switchIdRight() {
     }
 }
 
+function adjustSlider(nr_layers) {
+    $("#layer-nr-slider").attr("max", nr_layers);
+    $("#layer_max").text(nr_layers);
+}
+
 function refreshLayerNr(newLayer) {
     currentLayer = newLayer;
 
@@ -1010,13 +984,7 @@ function refreshHeadNr(newLayer, newHead){
     $("#attention_h_nr_label").text("Head " + newHead);
 }
 
-
-
-
-
-
 $(document).ready(function () {
-// TODO this is where everything start running
 
     $("#layer-nr-slider").val(0);
     $("#attention_layer").val(0);
@@ -1025,9 +993,11 @@ $(document).ready(function () {
     $("#attention_h").val(0);
     loadSamples('squad');
 
+    $("#button-spinner").hide();
+    $('#attention_button_spinner').hide();
+    $('#impact_button_spinner').hide();
 
     var ctx = $('#plot_layers');
-
     var aspectRatio = (($(window).width() - 3000) / (-3060)).toFixed(1);
     aspectRatio = Math.max(aspectRatio, 0.5);
     aspectRatio = Math.min(aspectRatio, 1);
@@ -1123,7 +1093,6 @@ $(document).ready(function () {
     });
 
     var heads_ctx = $('#plot_heads');
-
     var aspectRatio = (($(window).width() - 3000) / (-3060)).toFixed(1);
     aspectRatio = Math.max(aspectRatio, 0.5);
     aspectRatio = Math.min(aspectRatio, 1);
@@ -1245,6 +1214,7 @@ $(document).ready(function () {
 
         }
     });
+
     $("#attention_head").on("input change", function () {
         var newHead = $(this).val();
         var newLayer = $("#attention_layer").val();
@@ -1268,6 +1238,7 @@ $(document).ready(function () {
 
         }
     });
+
     $("#attention_h").on("input change", function () {
         var newHead = $(this).val();
         var newLayer = $("#attention_l").val();
@@ -1279,17 +1250,9 @@ $(document).ready(function () {
         }
     });
 
-
-
-
     $("#own-example-check").change(function () {
         toggleOwnExample();
     });
-
-    $("#button-spinner").hide();
-    $('#attention_button_spinner').hide();
-    $('#impact_button_spinner').hide();
-
 
     var bar_ctx = $('#prediction');
     predictionPlot = Chart.Bar(bar_ctx, {
@@ -1322,8 +1285,7 @@ $(document).ready(function () {
           }
     });
 
-
-var layer_logits_ctx = $('#focus_logits')
+    var layer_logits_ctx = $('#focus_logits')
     layerByLayerPlot = Chart.Bar(layer_logits_ctx, {
           type: 'bar',
           data: {
@@ -1345,7 +1307,7 @@ var layer_logits_ctx = $('#focus_logits')
           }
     });
 
- var similarity_ctx = $('#similarity')
+    var similarity_ctx = $('#similarity')
     SimilarityPlot = Chart.Bar(similarity_ctx, {
           type: 'bar',
           data: {
@@ -1370,7 +1332,7 @@ var layer_logits_ctx = $('#focus_logits')
           }
     });
 
- var similarity_ctx = $('#head_similarity')
+    var similarity_ctx = $('#head_similarity')
     HeadSimilarityPlot = Chart.Bar(similarity_ctx, {
           type: 'bar',
           data: {
@@ -1395,7 +1357,7 @@ var layer_logits_ctx = $('#focus_logits')
           }
     });
 
- var plot1_ctx = $('#plot1')
+    var plot1_ctx = $('#plot1')
     Plot1 = Chart.Bar(plot1_ctx, {
           type: 'bar',
           data: {
@@ -1421,7 +1383,7 @@ var layer_logits_ctx = $('#focus_logits')
           }
     });
 
- var plot2_ctx = $('#plot2')
+    var plot2_ctx = $('#plot2')
     Plot2 = Chart.Bar(plot2_ctx, {
           type: 'bar',
           data: {
