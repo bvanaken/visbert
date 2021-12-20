@@ -451,7 +451,8 @@ def get_labels_for_tokens(features, layers, focus):
 
 def run():
     parser = argparse.ArgumentParser()
-    parser.add_argument("model_dir", help="directory where model files are stored")
+    parser.add_argument("base_folder", help="directory where model files are stored")
+    parser.add_argument("data1_dir", help="directory where model files are stored")
     parser.add_argument("model1_name", help="the name of the first model")
     parser.add_argument("model2_name", help="the name of the second model")
     parser.add_argument("model3_name", help="the name of the third model")
@@ -463,7 +464,6 @@ def run():
     parser.add_argument("model1_type", help="the type of the first model")
     parser.add_argument("model2_type", help="the type of the second model")
     parser.add_argument("model3_type", help="the type of the third model")
-    parser.add_argument("num_tag", help="the number of NER tags")
     args = parser.parse_args()
     logger.debug("Init BERT models")
     model.init(args)

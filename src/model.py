@@ -1,3 +1,5 @@
+from collections import Counter
+
 from transformers import BertModel, BertTokenizer, BertConfig
 from arabert.preprocess import ArabertPreprocessor
 from farasa.segmenter import FarasaSegmenter
@@ -27,14 +29,15 @@ model4 = None
 
 
 class BertNERModel:
-    def __init__(self, model_path: str, model_name: str, model_file: str, tab_name: str, model_type: str, cache_dir: str,num_tag: str, device: str = "cpu"):
-        self.model_path = model_path
+    def __init__(self,  model_name: str, model_file: str, data_path: str, tab_name: str, model_type: str, cache_dir: str, device: str = "cpu"):
         self.model_name = model_name
         self.model_file = model_file
+        self.model_data = self.read_arabic_data(data_path)
+        self.model_labels = list(Counter([label for sentence in self.model_data for label in sentence[1]]).keys())
         self.tab_name = tab_name
         self.model_type = model_type
         self.cache_dir = cache_dir
-        self.num_tag = num_tag
+        self.num_tag = len(self.model_labels)
         self.device = device
 
         self.model = self.load_model()
@@ -55,11 +58,9 @@ class BertNERModel:
         return model
 
     def load_ner_model(self):
-        # TODO you need to define a procedure where you allow 4 models to be created the pretrained and finetuned bert, the pretrained and finetuned ner model
         pretrained_ner_model = SCModel(int(self.num_tag), self.model_type)
         ner_model = SCModel(int(self.num_tag), self.model_type)
         ner_model.load_state_dict(torch.load(self.model_file, map_location=torch.device('cpu')))
-        # pretrained_model = BertModel.from_pretrained(self.model_type, output_attentions=True)
         return ner_model, pretrained_ner_model
 
     def load_tokenizer(self):
@@ -68,6 +69,28 @@ class BertNERModel:
     def load_preprocessor(self):
         farasa_segmenter = FarasaSegmenter(interactive=True)
         return ArabertPreprocessor(self.model_type)
+
+    def read_arabic_data(self, path):
+        with open(path, 'r', encoding='utf-8') as f:
+            data = []
+            sentence = []
+            label = []
+            for line in f:
+                if len(line.split()) != 0:
+                    if line.split()[0] == '.':
+                        if len(sentence) > 0:
+                            data.append((sentence, label))
+                            sentence = []
+                            label = []
+                        continue
+                    splits = line.split()
+                    if 'TB' not in splits:
+                        sentence.append(splits[0])
+                        if len(splits) == 2:
+                            label.append(splits[1])
+                        else:
+                            label.append(splits[-1])
+        return data
 
 
 def parse_model_output(ner_model, outputs,  sample, features):
@@ -168,14 +191,15 @@ def tokenize(input_sample, tokenizer, preprocessor, flag = False):
         features_processing = SecondSCDataset(
             texts=[input_sample.sentence],
             tags=[input_sample.labels],
+            ner_labels=input_sample.ner_labels,
             preprocessor=preprocessor,
             preprocess=True,
             tokenizer=tokenizer)
-
     else:
         features_processing = SCDataset(
             texts=[input_sample.sentence],
             tags=[input_sample.labels],
+            ner_labels=input_sample.ner_labels,
             preprocessor=preprocessor,
             preprocess=True,
             tokenizer=tokenizer)
@@ -197,12 +221,13 @@ def compute_training_impact(model_name, features):
         flag = True
     else:
         raise Exception
-    training_impact = AttentionSimilarity(model.pretrained_ner_model.bert,
-                                               model.ner_model.bert,
-                                               10,
-                                               model.tokenizer,
-                                               model.preprocessor,
-                                               features.tokens)
+    training_impact = AttentionSimilarity(model.model_data,
+                                          model.pretrained_ner_model.bert,
+                                          model.ner_model.bert,
+                                          10,
+                                          model.tokenizer,
+                                          model.preprocessor,
+                                          features.tokens)
     impact_heatmap = training_impact.compute_similarity()
     similarities = []
     for sentence in training_impact.data:
@@ -215,8 +240,8 @@ def compute_training_impact(model_name, features):
 
 
 class AttentionSimilarity:
-    def __init__(self, model1, model2, sample_size, tokeniser, preprocessor, tokens):
-        self.data = self.read_arabic_data('/Users/ay227/Desktop/library_modification/backup/visbertNER/ANERCorp_CamelLab_test.txt')
+    def __init__(self, data, model1, model2, sample_size, tokeniser, preprocessor, tokens):
+        self.data = data
         self.model1 = model1
         self.model2 = model2
         self.sample_size = sample_size
@@ -224,21 +249,42 @@ class AttentionSimilarity:
         self.preprocessor = preprocessor
         self.tokens = tokens
 
-    def read_arabic_data(self, path):
-        with open(path, 'r', encoding='utf-8') as f:
-            data = []
-            sentence = []
-            for line in f:
-                if len(line.split()) != 0:
-                    if line.split()[0] == '.':
-                        if len(sentence) > 0:
-                            data.append(' '.join(sentence))
-                            sentence = []
-                        continue
-                    splits = line.split()
-                    if 'TB' not in splits:
-                        sentence.append(splits[0])
-        return data
+    # def read_arabic_data(self, path):
+    #     with open(path, 'r', encoding='utf-8') as f:
+    #         data = []
+    #         sentence = []
+    #         for line in f:
+    #             if len(line.split()) != 0:
+    #                 if line.split()[0] == '.':
+    #                     if len(sentence) > 0:
+    #                         data.append(' '.join(sentence))
+    #                         sentence = []
+    #                     continue
+    #                 splits = line.split()
+    #                 if 'TB' not in splits:
+    #                     sentence.append(splits[0])
+    #     return data
+    # def read_arabic_data(self, path):
+    #     with open(path, 'r', encoding='utf-8') as f:
+    #         data = []
+    #         sentence = []
+    #         label = []
+    #         for line in f:
+    #             if len(line.split()) != 0:
+    #                 if line.split()[0] == '.':
+    #                     if len(sentence) > 0:
+    #                         data.append((sentence, label))
+    #                         sentence = []
+    #                         label = []
+    #                     continue
+    #                 splits = line.split()
+    #                 if 'TB' not in splits:
+    #                     sentence.append(splits[0])
+    #                     if len(splits) == 2:
+    #                         label.append(splits[1])
+    #                     else:
+    #                         label.append(splits[-1])
+    #     return data
 
     def format_attention(self, attention):
         squeezed = []
@@ -444,7 +490,7 @@ class AttentionSimilarity:
         for i in tqdm(range(len(sample(self.data, self.sample_size))), desc='Reading Data'):
             # index of the sentence = i zero to access the word list and 480 is the max length
             data = sample(self.data, self.sample_size)
-            sentence_a = data[i]
+            sentence_a = ' '.join(data[i][0])
             inputs = self.tokenizer.encode_plus(self.preprocessor.preprocess(sentence_a), return_tensors='pt', add_special_tokens=True)
             token_type_ids = inputs['token_type_ids']
             input_ids = inputs['input_ids']
@@ -498,13 +544,13 @@ def init(args):
     global model4
 
     m1: BertNERModel = BertNERModel(
-        model_path=args.model_dir,
         model_name=args.model1_name,
-        model_file=os.path.join(args.model_dir, args.model1_name),
+        model_file=os.path.join(args.base_folder, args.model1_name),
+        data_path=os.path.join(args.base_folder, args.data1_dir),
         tab_name=args.tab1_name,
         model_type=args.model1_type,
-        cache_dir=os.path.join(args.model_dir, "tmp"),
-        num_tag=args.num_tag)
+        cache_dir=os.path.join(args.base_folder, "tmp")
+    )
     model1 = m1
     logger.debug(f"Finished loading {args.model1_name}")
 
