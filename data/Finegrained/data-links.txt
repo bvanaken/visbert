@@ -1,0 +1,3 @@
+https://github.com/ibrahim85/Arabic-Named-Entity-Recognition-1/blob/master/README.md https://fsalotaibi.kau.edu.sa/Pages-Arabic-NE-Corpora.aspx
+https://aclanthology.org/C14-1093.pdf 
+https://sourceforge.net/projects/arabic-named-entity-corpora/files/ 
