@@ -221,6 +221,7 @@ def compute_training_impact(model_name, features):
         flag = True
     else:
         raise Exception
+    print ('change')
     training_impact = AttentionSimilarity(model.model_data,
                                           model.pretrained_ner_model.bert,
                                           model.ner_model.bert,
