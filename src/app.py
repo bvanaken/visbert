@@ -466,6 +466,7 @@ def run():
     model.init(args)
     logger.debug("Run app")
     waitress.serve(app.run("0.0.0.0", port=1337))
+    print('Hello it is me')
 
 
 if __name__ == '__main__':
