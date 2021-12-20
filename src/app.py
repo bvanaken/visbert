@@ -47,15 +47,16 @@ def initialize_dropdown():
     sentence = decode_text(data["sentence"])
     labels = decode_text(data["labels"])
     mode = decode_text(data["mode"])
-
+    ner_labels = data["ner_labels"]
 
     data = NERSample(sample_id="",
-                       sentence=sentence.split(','),
-                       sentence_labels="",
-                       labels=[l for l in labels.split(" ") if l in ['B-LOC', 'I-LOC', 'B-ORG', 'I-ORG', 'B-MISC', 'I-MISC', 'B-PERS', 'I-PERS', 'O']],
-                     mode = mode)  #
-    annotated_tokens = model.initialize_dropdown(data, model_name)
+                     sentence=sentence.split(' &#& '),
+                     sentence_labels="",
+                     labels=[l for l in labels.split(" ") if l in ner_labels],
+                     ner_labels=ner_labels,
+                     mode = mode)
 
+    annotated_tokens = model.initialize_dropdown(data, model_name)
     output = {
         'annotated_tokens': annotated_tokens.tolist(),
     }
@@ -66,23 +67,24 @@ def initialize_dropdown():
 
 @app.route(base_route + "/predict", methods=['POST'])
 def get_output():
-    print(' I am the new change')
     data = request.get_json()
     input_sample = data["sample"]
     model_name = data["model"]
     random_replacement = decode_text(input_sample["random"])
-    sentence = decode_text(input_sample["sentence"]).split(',')
+    sentence = decode_text(input_sample["sentence"]).split(' &#& ')
     if random_replacement !='':
         randomly_replce_tokens(sentence, int(random_replacement))
     sentence_labels = decode_text(input_sample["sentence_labels"])
     labels = decode_text(input_sample["gold_standard"])
     focus = decode_text(input_sample["focus"])
     mode = decode_text(input_sample["mode"])
+    ner_labels = data["ner_labels"]
 
     sample = NERSample(sample_id=decode_text(input_sample["id"]),
                        sentence=sentence,
                        sentence_labels=sentence_labels,
-                       labels=[l for l in labels.split(" ") if l in ['B-LOC', 'I-LOC', 'B-ORG', 'I-ORG', 'B-MISC', 'I-MISC', 'B-PERS', 'I-PERS', 'O']],
+                       labels=[l for l in labels.split(" ") if l in ner_labels],
+                       ner_labels= ner_labels,
                        mode = mode)
 
     layer_outputs, layers, hidden_states, attentions, features, attentions_heads = generate_model_output(sample, model_name)
@@ -114,7 +116,7 @@ def get_attention():
     data = request.get_json()
     input_sample = data["sample"]
     model_name = data["model"]
-    sentence = decode_text(input_sample["sentence"]).split(',')
+    sentence = decode_text(input_sample["sentence"]).split(' &#& ')
 
     sentence_labels = decode_text(input_sample["sentence_labels"])
     labels = decode_text(input_sample["gold_standard"])
@@ -123,23 +125,21 @@ def get_attention():
     layer_nr = int(input_sample['attention_layer'])
     head_nr = int(input_sample['attention_head'])
     mode = decode_text(input_sample["mode"])
+    ner_labels = data["ner_labels"]
 
 
     sample = NERSample(sample_id=decode_text(input_sample["id"]),
                        sentence=sentence,
                        sentence_labels=sentence_labels,
-                       labels=[l for l in labels.split(" ") if l in ['B-LOC', 'I-LOC', 'B-ORG', 'I-ORG', 'B-MISC', 'I-MISC', 'B-PERS', 'I-PERS', 'O']], mode = mode)
+                       labels=[l for l in labels.split(" ") if l in ner_labels],
+                       ner_labels = ner_labels,
+                       mode = mode)
 
     layer_outputs, layers, hidden_states, attentions, features, attentions_heads = generate_model_output(sample, model_name)
-
     attention_tokens = [remove_padding(layer[0], features.tokens) for layer in attentions]
     attention_summary = extract_attention_summary(attention_tokens[layer_nr][head_nr], features.annotated_tokens)
     local_global = extract_attention_local(attention_tokens[layer_nr][head_nr], features.annotated_tokens)
-
-
-
     head_similarity = compute_head_similarity(focus, attentions[layer_nr][0][head_nr], features)
-
     fig = px.imshow(attention_tokens[layer_nr][head_nr],
                     labels=dict(x="Attend To That Token", y="This Token", color="Attention Weight"),
                     x=features.annotated_tokens,
@@ -164,20 +164,23 @@ def get_impact():
     data = request.get_json()
     input_sample = data["sample"]
     model_name = data["model"]
-    sentence = decode_text(input_sample["sentence"]).split(',')
+    sentence = decode_text(input_sample["sentence"]).split(' &#& ')
 
     sentence_labels = decode_text(input_sample["sentence_labels"])
     labels = decode_text(input_sample["gold_standard"])
     mode = decode_text(input_sample["mode"])
+    ner_labels = data["ner_labels"]
 
 
 
     sample = NERSample(sample_id=decode_text(input_sample["id"]),
                        sentence=sentence,
                        sentence_labels=sentence_labels,
-                       labels=[l for l in labels.split(" ") if l in ['B-LOC', 'I-LOC', 'B-ORG', 'I-ORG', 'B-MISC', 'I-MISC', 'B-PERS', 'I-PERS', 'O']],  mode= mode)
-    layer_outputs, hidden_states, attentions, features = model.tokenize_and_predict(sample, model_name)
+                       labels=[l for l in labels.split(" ") if l in ner_labels],
+                       ner_labels=ner_labels,
+                       mode= mode)
 
+    layer_outputs, hidden_states, attentions, features = model.tokenize_and_predict(sample, model_name)
     change_matrix, embedding_similarities = model.compute_training_impact(model_name, features)
     change_fig = px.imshow(change_matrix,
                     labels=dict(x="Heads", y="Layers", color="Similarity Score"),
