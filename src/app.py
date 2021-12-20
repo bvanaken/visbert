@@ -78,8 +78,6 @@ def get_output():
     labels = decode_text(input_sample["gold_standard"])
     focus = decode_text(input_sample["focus"])
     mode = decode_text(input_sample["mode"])
-    # layer_nr = int(input_sample['attention_l'])
-    # head_nr = int(input_sample['attention_h'])
 
     sample = NERSample(sample_id=decode_text(input_sample["id"]),
                        sentence=sentence,
@@ -94,33 +92,7 @@ def get_output():
     layer_focus_prediction = get_focus_prediction(layer_outputs, focus, features)
 
     layers_similarity = [compute_similarity(focus, layer[0], features) for layer in hidden_states]
-    # head_similarity = []
-    # heads_similarity = []
-    # for layer in attentions:
-    #     for head in layer[0]:
-    #         head_similarity.append(compute_similarity(focus, head, features))
-    #     heads_similarity.append(head_similarity)
-    #     head_similarity = []
-    # attention_tokens = [remove_padding(layer[0], features.tokens) for layer in attentions]
-    # attention_summary = extract_attention_summary(attention_tokens[layer_nr][head_nr], features.annotated_tokens)
-    # local_global = extract_attention_local(attention_tokens[layer_nr][head_nr], features.annotated_tokens)
-    #
-    # fig = px.imshow(attention_tokens[layer_nr][head_nr],
-    #                 labels=dict(x="Attend To That Token", y="This Token", color="Attention Weight"),
-    #                 x=features.annotated_tokens,
-    #                 y=features.annotated_tokens, color_continuous_scale='Inferno'
-    #                 )
-    #
-    # fig.layout.height = 1000
-    # fig.layout.width = 1000
-    # attention_heat = fig.to_html(full_html=False)
-    # change_matrix = model.compute_training_impact(sample, model_name)
-    # change_fig = px.imshow(change_matrix,
-    #                 labels=dict(x="Heads", y="Layers", color="Similarity Score"),
-    #                 )
-    # change_fig.layout.height = 1000
-    # change_fig.layout.width = 1000
-    # change_heatmap = change_fig.to_html(full_html=False)
+
 
     output = {
         'hidden_states': layers,
@@ -132,8 +104,6 @@ def get_output():
         'layers_similarity': layers_similarity,
         'attentions_heads': attentions_heads,
         'annotated_heads': annotated_heads,
-        # 'heads_similarity': heads_similarity[0][0],
-        # 'change_heatmap': change_heatmap
     }
 
     return jsonify(output)
@@ -174,7 +144,6 @@ def get_attention():
                     labels=dict(x="Attend To That Token", y="This Token", color="Attention Weight"),
                     x=features.annotated_tokens,
                     y=features.annotated_tokens
-                    # , color_continuous_scale='Inferno'
                     )
 
     fig.layout.height = 700
@@ -212,8 +181,6 @@ def get_impact():
     change_matrix, embedding_similarities = model.compute_training_impact(model_name, features)
     change_fig = px.imshow(change_matrix,
                     labels=dict(x="Heads", y="Layers", color="Similarity Score"),
-                    # x=features.annotated_tokens,
-                    # y=features.annotated_tokens, color_continuous_scale='Inferno'
                     )
     change_fig.layout.height = 700
     change_fig.layout.width = 700
