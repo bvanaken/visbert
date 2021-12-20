@@ -533,9 +533,9 @@ function separate_sentence_labels(sentenceList){
         var sentence_words = "";
         for (element of sentence){
                    words+= "Word ("+count + ") : " + element.split("&#&")[0]
-                   words+=" &#& "
+                   words+=" # "
                    gold_standard+= "Word ("+count + ") : " + element.split("&#&")[1]
-                   gold_standard+=" &#& "
+                   gold_standard+=" # "
                    count++;
                    sentence_labels+= "<span style='color:"+color_map[element.split("&#&")[1]]+"'>" +element.split("&#&")[0]+ "</span>";
                    sentence_labels+=" "
@@ -548,6 +548,9 @@ function separate_sentence_labels(sentenceList){
 }
 
 function insertSample(sample) {
+
+    $('#predicted-labels').val("");
+    $('#mistakes').val("");
 
     $('#id-input').prop('disabled', false);
     $('#id-input').val(sample.sentence_number);
@@ -575,10 +578,13 @@ function insertSample(sample) {
 function removeSample() {
     $('#id-input').prop('disabled', true);
     $('#sentence').val("");
+    $('#annotated_sentence').val("");
     $('#gold_standard').val("");
     $('#sentence_labels').text("");
     $('#sentence_labels').removeClass('goldstandard-highlighted');
-    $('predicted-labels').text("");
+    $('#predicted-labels').val("");
+    $('#agreement').val("");
+    $('mistakes').val("");
     removeOptions(document.getElementById('focus'));
 
 
@@ -590,10 +596,12 @@ function removeSample() {
 
 function initialize_dropdown(model_name){
     removeOptions(document.getElementById('focus'));
+    id = parseText($('#id-input'));
     sentence = parseText($('#sentence'));
     labels = parseText($('#gold_standard'));
     mode = parseText($('#mode'));
     var data = {};
+    data.id = id;
     data.sentence = sentence;
     data.labels = labels;
     data.model_name = model_name;
@@ -611,6 +619,7 @@ function initialize_dropdown(model_name){
         success: function (data) {
             populate_dropdown(data.annotated_tokens);
             populate_tabs(data);
+            populate_agreement(data);
         },
         error: predictionError
     });
@@ -636,12 +645,26 @@ function populate_tabs(data){
     var tab2 = document.getElementById('hotpotTab');
     var tab3 = document.getElementById('babiTab');
     var tab4 = document.getElementById('v2secibdTab');
-    var tab4 = document.getElementById('englishTab');
+    var tab5 = document.getElementById('englishTab');
     tab1.innerHTML = data.tab1 + " <a href='https://projector.tensorflow.org/?config=https://gist.githubusercontent.com/ay94/5e2cea01a94359a494cc120199bb5d98/raw/cf307e63ebbb40b526f45c1f4735326c1f389233/arabertv02_config.json'><span class='footnote-id'>[1]</span></a>";
     tab2.innerHTML = data.tab2 + " <span class='footnote-id'>[2]</span></div>";
     tab3.innerHTML = data.tab3 + " <span class='footnote-id'>[3]</span>";
     tab4.innerHTML = data.tab4 + " <span class='footnote-id'>[4]</span>";
-    tab4.innerHTML = data.tab4 + " <span class='footnote-id'>[5]</span>";
+    tab5.innerHTML = data.tab5 + " <span class='footnote-id'>[5]</span>";
+}
+
+function populate_agreement(data){
+
+        agreement = data.agreement
+        count = 0;
+        var agreements = "";
+
+        for (element of agreement){
+                   agreements+= "Word ("+count + ") : " + element
+                   agreements+=" # "
+                   count++;
+          }
+       document.getElementById("agreement").innerHTML = agreements;
 }
 
 function removeOptions(selectElement) {
