@@ -154,9 +154,7 @@
 
 
             <div class="canvas-container">
-<!--                <canvas id="prediction", height="100"></canvas>-->
-                                 <canvas id="focus_logits"></canvas>
-
+                <canvas id="focus_logits"></canvas>
             </div>
 
 
@@ -195,29 +193,12 @@
 
             </div>
 
-
-
         </div>
-<div class = row >
-        <div class =col aligh="right" >
-<!--        <div class ="col" align="center">-->
-<!--        <span class=".no-wrap-text own-example-input">-->
-<!--                 <select id="similarity_measure", class=".form-select", onchange="change_measure()">-->
-<!--                     <option>similarity</option>-->
-<!--                     <option>distance</option>-->
-<!--                 </select>-->
-<!--            </span>-->
-<!--&lt;!&ndash;            </div>&ndash;&gt;-->
-<!--        <canvas id="similarity"></canvas>-->
-             <div class="canvas-container">
-<!--                <canvas id="focus_logits"></canvas>-->
-                      </div>
-    </div>
-    </div>
 
 <!--        This is the end of the second column-->
 
     </div>
+
     <!--        This is the end of the first row-->
      <div class =row, align="center">
         <div class="slider-container" align="center">
@@ -226,13 +207,14 @@
                     <div class="flex-fill layer-label-large" align="center" id="layer_nr_label">Layer 0</div>
                     <div class="flex-fill layer-label" align="right" id="layer_max">12</div>
                 </div>
-    <span class="form-label layer-label" id="layer_nr_label">Layer 0</span>
+            <span class="form-label layer-label" id="layer_nr_label">Layer 0</span>
             <input type="range" id="layer-nr-slider" min="0" max="12" step="1" value="0", align="center"/>
             </div>
     </div>
     <div class =row>
-             <canvas id="plot_layers", height="500"></canvas>
+        <canvas id="plot_layers", height="500"></canvas>
     </div>
+
       <div class =row>
           <div class="col" align="center">
              <div class="slider-container" align="center">
@@ -241,7 +223,6 @@
                     <div class="flex-fill layer-label-large" align="center" id="attention_l_nr_label">Layer 0</div>
                     <div class="flex-fill layer-label" align="right" id="attention_l_max">11</div>
                 </div>
-<!--            <span class="form-label layer-label" id="attention_layer_nr_label">Layer 0</span>-->
             <input type="range" id="attention_l" min="0" max="11" step="1" value="0", align="center"/>
             </div>
           <br>
@@ -251,16 +232,13 @@
                     <div class="flex-fill layer-label-large" align="center" id="attention_h_nr_label">Head 0</div>
                     <div class="flex-fill layer-label" align="right" id="attention_h_max">11</div>
                 </div>
-<!--            <span class="form-label layer-label" id="attention_head_nr_label">Layer 0</span>-->
             <input type="range" id="attention_h" min="0" max="11" step="1" value="0", align="center"/>
             </div>
               </div>
-<!--           <div class="col" >-->
-<!--        <canvas id="embedding_similarity" height="100"></canvas>-->
-<!--    </div>-->
+
              <canvas id="plot_heads", height="300"></canvas>
 
-    </div>
+      </div>
 
 
 
@@ -277,7 +255,6 @@
                     <div class="flex-fill layer-label-large" align="center" id="attention_layer_nr_label">Layer 0</div>
                     <div class="flex-fill layer-label" align="right" id="attention_layer_max">11</div>
                 </div>
-<!--            <span class="form-label layer-label" id="attention_layer_nr_label">Layer 0</span>-->
             <input type="range" id="attention_layer" min="0" max="11" step="1" value="0", align="center"/>
             </div>
 
@@ -287,7 +264,6 @@
                     <div class="flex-fill layer-label-large" align="center" id="attention_head_nr_label">Head 0</div>
                     <div class="flex-fill layer-label" align="right" id="attention_head_max">11</div>
                 </div>
-<!--            <span class="form-label layer-label" id="attention_head_nr_label">Layer 0</span>-->
             <input type="range" id="attention_head" min="0" max="11" step="1" value="0", align="center"/>
             </div>
              <div class =col align="center">
@@ -302,16 +278,18 @@
             <br>
             <div id="attention_heat"></div>
             <br>
-
         </div>
-  <div class =col align="center">
+
+            <div class =col align="center">
                 <span class=".no-wrap-text own-example-input">
                     <select id="change_attention_analysis", class=".form-select", onchange="change_analysis()">
                      <option>produce_receive</option>
                      <option>local_global</option>
                  </select>
-            </span>
+                </span>
+
             </div>
+
            <div class =col align="right">
                <button class="form-button btn btn-info btn-block" onclick="requestAttention(); clicky.log('#attention','attention');">Update Attention Head
                 <i class="fa fa-spinner fa-spin" id="attention_button_spinner"></i>
@@ -320,43 +298,14 @@
                 <i class="fa fa-spinner fa-spin" id="impact_button_spinner"></i>
             </button>
 
-<!--            <div class="canvas-container">-->
                <canvas id="plot1" height="200" width="500"></canvas>
 
                <canvas id="plot2" height="200" width="500"></canvas>
 
                <canvas id="head_similarity" height="200" width="500"></canvas>
-<!--            </div>-->
-               </div>
-<!--        <div class=col align="left">-->
-<!--&lt;!&ndash;               <div class="canvas-container">&ndash;&gt;-->
-<!--                    <canvas id="receive" height="500" width="500"></canvas>-->
-<!--&lt;!&ndash;               </div>&ndash;&gt;-->
-<!--             </div>-->
+           </div>
 
     </div>
-
-       <div class=row>
-<!--             <div class =col align="center">-->
-<!--                <span class=".no-wrap-text own-example-input">-->
-<!--                    <select id="change_attention_analysis", class=".form-select", onchange="change_analysis()">-->
-<!--                     <option>produce_receive</option>-->
-<!--                     <option>local_global</option>-->
-<!--                 </select>-->
-<!--            </span>-->
-<!--            </div>-->
-<!--           <div class =col align="right">-->
-
-<!--&lt;!&ndash;            <div class="canvas-container">&ndash;&gt;-->
-<!--                 <canvas id="produce" height="500" width="500"></canvas>-->
-<!--&lt;!&ndash;            </div>&ndash;&gt;-->
-<!--               </div>-->
-<!--        <div class=col align="left">-->
-<!--&lt;!&ndash;               <div class="canvas-container">&ndash;&gt;-->
-<!--                    <canvas id="receive" height="500" width="500"></canvas>-->
-<!--&lt;!&ndash;               </div>&ndash;&gt;-->
-<!--             </div>-->
-        </div>
 
 
  </div>
