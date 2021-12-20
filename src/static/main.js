@@ -1,7 +1,7 @@
-var ANERCorp_test = "./static/ANERCorp_test.json";
-var NERCorp_test = "./static/NERCorp_test.json";
-var NewsWire_test = "./static/NewsWire_test.json";
-var Wikipedia_test = "./static/Wikipedia_test.json";
+var ANERCorp_test = "./static/samples/ANERCorp_test.json";
+var NERCorp_test = "./static/samples/NERCorp_test.json";
+var NewsWire_test = "./static/samples/NewsWire_test.json";
+var Wikipedia_test = "./static/samples/Wikipedia_test.json";
 
 var color = Chart.helpers.color;
 var fontDefault = {
