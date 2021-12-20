@@ -265,17 +265,16 @@ class AttentionSimilarity:
         return [t.replace('Ġ', ' ').replace('▁', ' ').replace('</w>', '') for t in tokens]
 
     def attention_matrix(self,
-            attention=None,
-            tokens=None,
-            sentence_b_start=None,
-            prettify_tokens=True,
-            display_mode="dark",
-            encoder_attention=None,
-            decoder_attention=None,
-            cross_attention=None,
-            encoder_tokens=None,
-            decoder_tokens=None,
-    ):
+                         attention=None,
+                         tokens=None,
+                         sentence_b_start=None,
+                         prettify_tokens=True,
+                         display_mode="dark",
+                         encoder_attention=None,
+                         decoder_attention=None,
+                         cross_attention=None,
+                         encoder_tokens=None,
+                         decoder_tokens=None,):
         """Render model view
 
             Args:
