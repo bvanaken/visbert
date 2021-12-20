@@ -517,6 +517,7 @@ def run():
     parser.add_argument("tab1_name", help="the name of the first tab")
     parser.add_argument("tab2_name", help="the name of the second tab")
     parser.add_argument("tab3_name", help="the name of the third tab")
+    parser.add_argument("tab4_name", help="the name of the third tab")
     parser.add_argument("model1_type", help="the type of the first model")
     parser.add_argument("model2_type", help="the type of the second model")
     parser.add_argument("model3_type", help="the type of the third model")
