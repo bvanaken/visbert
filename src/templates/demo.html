@@ -90,17 +90,17 @@
 
 <div class="d-flex task-tab-wrapper">
 
-    <div class="p-2 flex-fill task-tab task-tab-active" id="squadTab" onclick="switchToSquad(); clicky.log('#squad','squad');">
+    <div class="p-2 flex-fill task-tab task-tab-active" id="model1Tab" onclick="switchToModel1(); clicky.log('#model1','model1');">
         <span class="footnote-id">[1]</span></div>
-    <div class="p-2 flex-fill task-tab" id="hotpotTab" onclick="switchToHotpot(); clicky.log('#hotpot','hotpot');">
+    <div class="p-2 flex-fill task-tab" id="model2Tab" onclick="switchToModel2(); clicky.log('#model2','model2');">
         <span class="footnote-id">[2]</span></div>
-    <div class="p-2 flex-fill task-tab task-tab" id="babiTab" onclick="switchToBabi(); clicky.log('#babi','babi');">
+    <div class="p-2 flex-fill task-tab task-tab" id="model3Tab" onclick="switchToModel3(); clicky.log('#model3','model3');">
         <span class="footnote-id">[3]</span>
     </div>
-    <div class="p-2 flex-fill task-tab task-tab" id="v2secibdTab" onclick="switchTov2SecondToken(); clicky.log('#v2second','v2second');">
+    <div class="p-2 flex-fill task-tab task-tab" id="model4Tab" onclick="switchToModel4(); clicky.log('#model4','model4');">
         <span class="footnote-id">[4]</span>
     </div>
-    <div class="p-2 flex-fill task-tab task-tab" id="englishTab" onclick="switchToEnglish(); clicky.log('#english','english');">
+    <div class="p-2 flex-fill task-tab task-tab" id="model5Tab" onclick="switchToModel5(); clicky.log('#model5','model5');">
         <span class="footnote-id">[5]</span>
     </div>
 </div>
@@ -180,7 +180,11 @@
             <textarea class="form-control form-textarea" id="agreement" name="agreement"
                       rows="2" placeholder="Enter correct prediction"></textarea>
 
-            <label class="control-label form-label" for="mistakes">Mistakes</label>
+            <label class="control-label form-label" for="mistakes">True Mistakes</label>
+            <textarea class="form-control form-textarea" id="true_mistakes" name="mistakes"
+                      rows="2" placeholder="Enter correct mistakes"></textarea>
+
+            <label class="control-label form-label" for="mistakes">Prediction Mistakes</label>
             <textarea class="form-control form-textarea" id="mistakes" name="mistakes"
                       rows="2" placeholder="Enter correct mistakes"></textarea>
 
