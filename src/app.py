@@ -40,6 +40,20 @@ def index():
 def image(filename):
     return send_file("./static/" + filename)
 
+@app.route(base_route + "/data_type", methods=['POST'])
+def change_data():
+    data = request.get_json()
+    model_name = data['model_name']
+
+    data_name = model.get_data_type(model_name)
+
+    output = {
+        'model_name': model_name,
+        'data_name': data_name,
+    }
+
+    return jsonify(output)
+
 @app.route(base_route + "/dropdown", methods=['POST'])
 def initialize_dropdown():
     data = request.get_json()
@@ -58,6 +72,7 @@ def initialize_dropdown():
                      mode=mode)
 
     annotated_tokens, agreement = model.initialize_dropdown(data, sentence_id, model_name)
+    true_mistakes = find_true_mistakes(agreement)
     output = {
         'annotated_tokens': annotated_tokens.tolist(),
         'tab1': model.model1.tab_name,
@@ -65,7 +80,8 @@ def initialize_dropdown():
         'tab3': model.model3.tab_name,
         'tab4': model.model4.tab_name,
         'tab5': model.model5.tab_name,
-        'agreement': agreement
+        'agreement': agreement,
+        'true_mistakes': true_mistakes
     }
 
     return jsonify(output)
@@ -202,6 +218,13 @@ def get_impact():
 
     return jsonify(output)
 
+def find_true_mistakes(agreement):
+    true_mistakes = []
+    for a in agreement:
+        if not a:
+            true_mistakes.append(a)
+    return true_mistakes
+
 def randomly_replce_tokens(sentence, n):
     for i in range(n):
         sentence[random.randrange(0, len(sentence))] = '[MASK]'
@@ -332,12 +355,20 @@ def extract_attention_summary(head, annotated_tokens):
         return sum(np.array(_list[:, col_idx]))
 
     for i,  token in enumerate(annotated_tokens):
-        if token.split('_')[-1] != '-100' and token != '[CLS]' and token != '[SEP]':
-            labels.append(token)
-            produced_sum = get_row(head, i)
-            recieved_sum = get_col(head, i)
-            produced_weights.append(produced_sum/len(annotated_tokens))
-            recieved_weights.append(recieved_sum/len(annotated_tokens))
+        if annotated_tokens[0] == '[CLS]' and annotated_tokens[-1] == '[SEP]':
+            if token.split('_')[-1] != '-100' and token != '[CLS]' and token != '[SEP]':
+                labels.append(token)
+                produced_sum = get_row(head, i)
+                recieved_sum = get_col(head, i)
+                produced_weights.append(produced_sum/len(annotated_tokens))
+                recieved_weights.append(recieved_sum/len(annotated_tokens))
+        else:
+            if token.split('_')[-1] != '-100' and token != '<s>' and token != '</s>':
+                labels.append(token)
+                produced_sum = get_row(head, i)
+                recieved_sum = get_col(head, i)
+                produced_weights.append(produced_sum/len(annotated_tokens))
+                recieved_weights.append(recieved_sum/len(annotated_tokens))
     return {'labels': labels, 'analysis1': produced_weights, 'analysis2': recieved_weights}
     #
 
@@ -352,18 +383,32 @@ def extract_attention_local(head, annotated_tokens):
         return np.array(_list[row_idx])
 
     for i,  token in enumerate(annotated_tokens):
-        if token.split('_')[-1] != '-100' and token != '[CLS]' and token != '[SEP]':
-            labels.append(token)
-            produced_weights = get_row(head, i)
-            for t,w in zip(annotated_tokens, produced_weights):
-                if len(t.split('_'))>1 and t.split('_')[1] ==token.split('_')[1]:
-                    local_att_wieght.append(w)
-                else:
-                    global_att_weight.append(w)
-            local_att.append(sum(local_att_wieght))
-            global_att.append(sum(global_att_weight))
-            local_att_wieght=[]
-            global_att_weight=[]
+        if annotated_tokens[0] == '[CLS]' and annotated_tokens[-1] == '[SEP]':
+            if token.split('_')[-1] != '-100' and token != '[CLS]' and token != '[SEP]':
+                labels.append(token)
+                produced_weights = get_row(head, i)
+                for t,w in zip(annotated_tokens, produced_weights):
+                    if len(t.split('_'))>1 and t.split('_')[1] ==token.split('_')[1]:
+                        local_att_wieght.append(w)
+                    else:
+                        global_att_weight.append(w)
+                local_att.append(sum(local_att_wieght))
+                global_att.append(sum(global_att_weight))
+                local_att_wieght=[]
+                global_att_weight=[]
+        else:
+            if token.split('_')[-1] != '-100' and token != '<s>' and token != '</s>':
+                labels.append(token)
+                produced_weights = get_row(head, i)
+                for t, w in zip(annotated_tokens, produced_weights):
+                    if len(t.split('_')) > 1 and t.split('_')[1] == token.split('_')[1]:
+                        local_att_wieght.append(w)
+                    else:
+                        global_att_weight.append(w)
+                local_att.append(sum(local_att_wieght))
+                global_att.append(sum(global_att_weight))
+                local_att_wieght = []
+                global_att_weight = []
     return {'labels': labels, 'analysis1': local_att, 'analysis2': global_att}
 
 
@@ -409,6 +454,14 @@ def get_labels_for_tokens(features, layers, focus):
                         pers_points.append(updated_layer)
                     elif token_label == 'I-PERS':
                         l[i]['label']= annotated_token
+                        updated_layer = l[i]
+                        pers_points.append(updated_layer)
+                    elif token_label == 'B-PER':
+                        l[i]['label'] = annotated_token
+                        updated_layer = l[i]
+                        pers_points.append(updated_layer)
+                    elif token_label == 'I-PER':
+                        l[i]['label'] = annotated_token
                         updated_layer = l[i]
                         pers_points.append(updated_layer)
                     elif token_label == 'B-ORG':
@@ -475,10 +528,16 @@ def run():
     parser.add_argument("tab3_name", help="Third Model Tab")
     parser.add_argument("tab4_name", help="Fourth Model Tab")
     parser.add_argument("tab5_name", help="Fifth Model Tab")
-    parser.add_argument("model1_type", help="AraBERTv02 Model Type")
-    parser.add_argument("model2_type", help="AraBERT Model Type")
-    parser.add_argument("model3_type", help="AraBERTv2 Model Type")
-    parser.add_argument("model4_type", help="BERT Model Type")
+    parser.add_argument("model1_type", help="First Model Type")
+    parser.add_argument("model2_type", help="Second Model Type")
+    parser.add_argument("model3_type", help="Third Model Type")
+    parser.add_argument("model4_type", help="Fourth Model Type")
+    parser.add_argument("model5_type", help="Fifth Model Type")
+    parser.add_argument("model1_preprocessing", help="First Model Preprocessing")
+    parser.add_argument("model2_preprocessing", help="Second Model Preprocessing")
+    parser.add_argument("model3_preprocessing", help="Third Model Preprocessing")
+    parser.add_argument("model4_preprocessing", help="Fourth Model Preprocessing")
+    parser.add_argument("model5_preprocessing", help="Fifth Model Preprocessing")
     args = parser.parse_args()
     logger.debug("Init BERT models")
     model.init(args)
