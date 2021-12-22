@@ -155,7 +155,7 @@ var focus_data = [];
 var scatterPlot;
 var scatterHeadPlot;
 var tokenInfo = {};
-var currentTask = 'squad';
+var currentTask = 'model1';
 var currentLayer = 0;
 var currentAttentionLayer = 0;
 var currentHeadLayer = 0;
@@ -184,8 +184,20 @@ var basePhaseLabels = {
     12: phase4
 };
 
+var data_labels_map =  {
+    ANERCorp:{
+        file: ANERCorp_test,
+        ner_labels: ['B-LOC', 'O', 'B-ORG', 'I-ORG', 'B-PERS', 'I-PERS', 'I-LOC', 'B-MISC', 'I-MISC']
+    },
+    NERCorp:{
+        file: NERCorp_test,
+        ner_labels: ['B-ORG', 'O', 'B-MISC', 'B-PER', 'I-PER', 'B-LOC', 'I-ORG', 'I-MISC', 'I-LOC']
+    },
+
+};
+
 var tasks = {
-    squad: {
+    model1: {
         file: ANERCorp_test,
         samples: null,
         currentIndex: 0,
@@ -195,7 +207,7 @@ var tasks = {
         phaseLabels: basePhaseLabels,
         ner_labels: ['B-LOC', 'O', 'B-ORG', 'I-ORG', 'B-PERS', 'I-PERS', 'I-LOC', 'B-MISC', 'I-MISC']
     },
-    babi: {
+    model2: {
         file: ANERCorp_test,
         samples: null,
         currentIndex: 0,
@@ -205,7 +217,7 @@ var tasks = {
         phaseLabels: basePhaseLabels,
         ner_labels: ['B-LOC', 'O', 'B-ORG', 'I-ORG', 'B-PERS', 'I-PERS', 'I-LOC', 'B-MISC', 'I-MISC']
     },
-    hotpot: {
+    model3: {
         file: ANERCorp_test,
         samples: null,
         currentIndex: 0,
@@ -215,7 +227,7 @@ var tasks = {
         phaseLabels: basePhaseLabels,
         ner_labels: ['B-LOC', 'O', 'B-ORG', 'I-ORG', 'B-PERS', 'I-PERS', 'I-LOC', 'B-MISC', 'I-MISC']
     },
-    v2SecondToken: {
+    model4: {
         file: ANERCorp_test,
         samples: null,
         currentIndex: 0,
@@ -225,7 +237,7 @@ var tasks = {
         phaseLabels: basePhaseLabels,
         ner_labels: ['B-LOC', 'O', 'B-ORG', 'I-ORG', 'B-PERS', 'I-PERS', 'I-LOC', 'B-MISC', 'I-MISC']
     },
-    english: {
+    model5: {
         file: NERCorp_test,
         samples: null,
         currentIndex: 0,
@@ -620,6 +632,7 @@ function initialize_dropdown(model_name){
             populate_dropdown(data.annotated_tokens);
             populate_tabs(data);
             populate_agreement(data);
+            populate_true_mistakes(data);
         },
         error: predictionError
     });
@@ -641,11 +654,11 @@ function populate_dropdown(options){
 }
 
 function populate_tabs(data){
-    var tab1 = document.getElementById('squadTab');
-    var tab2 = document.getElementById('hotpotTab');
-    var tab3 = document.getElementById('babiTab');
-    var tab4 = document.getElementById('v2secibdTab');
-    var tab5 = document.getElementById('englishTab');
+    var tab1 = document.getElementById('model1Tab');
+    var tab2 = document.getElementById('model2Tab');
+    var tab3 = document.getElementById('model3Tab');
+    var tab4 = document.getElementById('model4Tab');
+    var tab5 = document.getElementById('model5Tab');
     tab1.innerHTML = data.tab1 + " <a href='https://projector.tensorflow.org/?config=https://gist.githubusercontent.com/ay94/5e2cea01a94359a494cc120199bb5d98/raw/cf307e63ebbb40b526f45c1f4735326c1f389233/arabertv02_config.json'><span class='footnote-id'>[1]</span></a>";
     tab2.innerHTML = data.tab2 + " <span class='footnote-id'>[2]</span></div>";
     tab3.innerHTML = data.tab3 + " <span class='footnote-id'>[3]</span>";
@@ -667,6 +680,20 @@ function populate_agreement(data){
        document.getElementById("agreement").innerHTML = agreements;
 }
 
+function populate_true_mistakes(data){
+
+        mistakes = data.true_mistakes
+        count = 0;
+        var true_mistakes = "";
+        true_mistakes+= "Number of True Mistakes: " +mistakes.length+ " => "
+        for (element of mistakes){
+                   true_mistakes+= "Word ("+count + ") : " + element
+                   true_mistakes+=" # "
+                   count++;
+          }
+       document.getElementById("true_mistakes").innerHTML = true_mistakes;
+}
+
 function removeOptions(selectElement) {
    var i, L = selectElement.options.length - 1;
    for(i = L; i >= 0; i--) {
@@ -686,7 +713,6 @@ function parseText(component) {
     text = trim(text);
     return text;
 }
-
 
 function specify_prediction_mistakes(currentLayer, prediction, mistakes){
         predicted_labels = ''
@@ -905,8 +931,33 @@ function requestAttention(){
 }
 
 // Sample Related Functions
+function getDataType() {
+         var data = {};
+         data.model_name = currentTask
+         $.ajax({
+            url: '/data_type',
+            type: 'post',
+            data: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            dataType: 'json',
+            success: function (data) {
+                changeData(data);
+            },
+            error: predictionError
+        });
+}
 
-function loadSamples() {
+function changeData(data) {
+         var model_name = data.model_name;
+         var data_name = data.data_name;
+         tasks[model_name].file = data_labels_map[data_name].file
+         tasks[model_name].ner_labels = data_labels_map[data_name].ner_labels
+         loadSamples(tasks)
+}
+
+function loadSamples(tasks) {
     var task = tasks[currentTask];
 
     if (task.samples === null) {
@@ -943,74 +994,74 @@ function get_sample(){
     }
 }
 
-function switchToHotpot() {
-    currentTask = 'hotpot';
+function switchToModel1() {
+    currentTask = 'model1';
 
-    $('#hotpotTab').addClass('task-tab-active');
-    $('#squadTab').removeClass('task-tab-active');
-    $('#babiTab').removeClass('task-tab-active');
-    $('#v2secibdTab').removeClass('task-tab-active');
-    $('#englishTab').removeClass('task-tab-active');
+    $('#model1Tab').addClass('task-tab-active');
+    $('#model2Tab').removeClass('task-tab-active');
+    $('#model3Tab').removeClass('task-tab-active');
+    $('#model4Tab').removeClass('task-tab-active');
+    $('#model5Tab').removeClass('task-tab-active');
+    reset_plots();
+
+    if (!ownExample) {
+        getDataType();
+    }
+}
+
+function switchToModel2() {
+    currentTask = 'model2';
+
+    $('#model1Tab').removeClass('task-tab-active');
+    $('#model2Tab').addClass('task-tab-active');
+    $('#model3Tab').removeClass('task-tab-active');
+    $('#model4Tab').removeClass('task-tab-active');
+    $('#model5Tab').removeClass('task-tab-active');
     reset_plots()
     if (!ownExample) {
-        loadSamples();
+        getDataType();
     }
 }
 
-function switchToSquad() {
-    currentTask = 'squad';
+function switchToModel3() {
+    currentTask = 'model3';
 
-    $('#squadTab').addClass('task-tab-active');
-    $('#hotpotTab').removeClass('task-tab-active');
-    $('#babiTab').removeClass('task-tab-active');
-    $('#v2secibdTab').removeClass('task-tab-active');
-    $('#englishTab').removeClass('task-tab-active');
+    $('#model1Tab').removeClass('task-tab-active');
+    $('#model2Tab').removeClass('task-tab-active');
+    $('#model3Tab').addClass('task-tab-active');
+    $('#model4Tab').removeClass('task-tab-active');
+    $('#model5Tab').removeClass('task-tab-active');
     reset_plots();
-
     if (!ownExample) {
-        loadSamples();
+        getDataType();
     }
 }
 
-function switchToBabi() {
-    currentTask = 'babi';
+function switchToModel4() {
+    currentTask = 'model4';
 
-    $('#squadTab').removeClass('task-tab-active');
-    $('#hotpotTab').removeClass('task-tab-active');
-    $('#babiTab').addClass('task-tab-active');
-    $('#v2secibdTab').removeClass('task-tab-active');
-    $('#englishTab').removeClass('task-tab-active');
+    $('#model1Tab').removeClass('task-tab-active');
+    $('#model2Tab').removeClass('task-tab-active');
+    $('#model3Tab').removeClass('task-tab-active');
+    $('#model4Tab').addClass('task-tab-active');
+    $('#model5Tab').removeClass('task-tab-active');
     reset_plots();
     if (!ownExample) {
-        loadSamples();
+        getDataType();
     }
 }
 
-function switchTov2SecondToken() {
-    currentTask = 'v2SecondToken';
+function switchToModel5() {
+    currentTask = 'model5';
 
-    $('#squadTab').removeClass('task-tab-active');
-    $('#hotpotTab').removeClass('task-tab-active');
-    $('#babiTab').removeClass('task-tab-active');
-    $('#englishTab').removeClass('task-tab-active');
-    $('#v2secibdTab').addClass('task-tab-active');
+    $('#model1Tab').removeClass('task-tab-active');
+    $('#model2Tab').removeClass('task-tab-active');
+    $('#model3Tab').removeClass('task-tab-active');
+    $('#model4Tab').removeClass('task-tab-active');
+    $('#model5Tab').addClass('task-tab-active');
     reset_plots();
     if (!ownExample) {
-        loadSamples();
-    }
-}
-
-function switchToEnglish() {
-    currentTask = 'english';
-
-    $('#squadTab').removeClass('task-tab-active');
-    $('#hotpotTab').removeClass('task-tab-active');
-    $('#babiTab').removeClass('task-tab-active');
-    $('#v2secibdTab').removeClass('task-tab-active');
-    $('#englishTab').addClass('task-tab-active');
-    reset_plots();
-    if (!ownExample) {
-        loadSamples();
+        getDataType();
     }
 }
 
@@ -1021,6 +1072,7 @@ function switchIdLeft() {
 
         task.currentIndex = task.currentIndex - 1;
         insertSample(task.samples[task.currentIndex]);
+        reset_plots();
     }
 }
 
@@ -1030,6 +1082,7 @@ function switchIdRight() {
     if (task.currentIndex < task.samples.length - 1 && !ownExample) {
         task.currentIndex = task.currentIndex + 1;
         insertSample(task.samples[task.currentIndex]);
+        reset_plots();
     }
 }
 
@@ -1066,7 +1119,7 @@ $(document).ready(function () {
     $("#attention_head").val(0);
     $("#attention_l").val(0);
     $("#attention_h").val(0);
-    loadSamples('squad');
+    getDataType('model1')
 
     $("#button-spinner").hide();
     $('#attention_button_spinner').hide();
