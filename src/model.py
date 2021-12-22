@@ -1,7 +1,7 @@
 from collections import Counter
 
 import pandas as pd
-from transformers import BertModel, BertTokenizer, BertConfig
+from transformers import BertModel, BertTokenizer, BertConfig, XLMRobertaConfig, XLMRobertaTokenizer, XLMRobertaModel, AutoConfig, AutoTokenizer, AutoModel
 from arabert.preprocess import ArabertPreprocessor
 from farasa.segmenter import FarasaSegmenter
 
@@ -31,7 +31,8 @@ model5 = None
 
 
 class BertNERModel:
-    def __init__(self,  model_name: str, model_file: str, data_path: str, error_path: str, tab_name: str, model_type: str, cache_dir: str, device: str = "cpu"):
+    def __init__(self, base_folder: str, model_name: str, model_file: str, data_path: str, error_path: str, tab_name: str, model_type: str, model_preprocessing: str, cache_dir: str, device: str = "cpu"):
+        self.base_folder = base_folder
         self.model_name = model_name
         self.model_file = model_file
         self.model_data = self.read_arabic_data(data_path)
@@ -39,6 +40,7 @@ class BertNERModel:
         self.model_labels = list(Counter([label for sentence in self.model_data for label in sentence[1]]).keys())
         self.tab_name = tab_name
         self.model_type = model_type
+        self.model_preprocessing = model_preprocessing
         self.cache_dir = cache_dir
         self.num_tag = len(self.model_labels)
         self.device = device
@@ -53,9 +55,18 @@ class BertNERModel:
 
     def load_model(self):
         start_time = current_milli_time()
-        config = BertConfig.from_pretrained(self.model_type, output_hidden_states=True, output_attentions=True, cache_dir=self.cache_dir)
-        pretrained_weights = torch.load(self.model_file, map_location=torch.device('cpu'))
-        model = BertModel.from_pretrained(self.model_type,state_dict=pretrained_weights,
+        if self.model_type == 'xlm-roberta-base':
+            # config = XLMRobertaConfig.from_pretrained(self.model_type, output_hidden_states=True, output_attentions=True,
+            #                                     cache_dir=self.cache_dir)
+            # pretrained_weights = torch.load(self.model_file, map_location=torch.device('cpu'))
+            # model = XLMRobertaModel.from_pretrained(self.model_type, state_dict=pretrained_weights,
+            #                                   config=config,
+            #                                   cache_dir=self.cache_dir)
+            model = AutoModel.from_pretrained(f'{self.base_folder}models/xlmr_ner')
+        else:
+            config = AutoConfig.from_pretrained(self.model_type, output_hidden_states=True, output_attentions=True, cache_dir=self.cache_dir)
+            pretrained_weights = torch.load(self.model_file, map_location=torch.device('cpu'))
+            model = AutoModel.from_pretrained(self.model_type,state_dict=pretrained_weights,
                                                      config=config,
                                                      cache_dir=self.cache_dir)
 
@@ -70,7 +81,11 @@ class BertNERModel:
         return ner_model, pretrained_ner_model
 
     def load_tokenizer(self):
-        return BertTokenizer.from_pretrained(self.model_type, cache_dir=self.cache_dir)
+        # if self.model_type == 'xlm-roberta-base':
+        #     tokenizer = XLMRobertaTokenizer.from_pretrained(self.model_type, cache_dir=self.cache_dir)
+        # else:
+        tokenizer = AutoTokenizer.from_pretrained(self.model_type, cache_dir=self.cache_dir)
+        return tokenizer
 
     def load_preprocessor(self):
         farasa_segmenter = FarasaSegmenter(interactive=True)
@@ -103,7 +118,7 @@ class BertNERModel:
         return errors
 
 
-def parse_model_output(ner_model, outputs,  sample, features):
+def parse_model_output(ner_model, outputs, features):
         def softmax(x):
             f_x = np.exp(x) / np.sum(np.exp(x))
             return f_x
@@ -132,24 +147,50 @@ def identify_mistakes(gold, prediction):
     mistakes = []
     for i, (t, p )in enumerate(zip(gold[0], prediction[0])):
         if t != p[0]:
-            mistakes.append(f'Word ({i}) True: {t} -> Prediction: {p[0]}')
-    return f'Number of mistakes: {len(mistakes)} Mistakes: {" # ".join(mistakes)}'
+            mistakes.append(f'Word ({i}) => True: {t} => Prediction: {p[0]}')
+    return f'Number of Prediction Mistakes: {len(mistakes)} ->  {" # ".join(mistakes)}'
+
+def get_data_type(model_name):
+    if model_name == "model1":
+        model = model1
+        flag = model.model_preprocessing
+    elif model_name == "model2":
+        model = model2
+        flag = model.model_preprocessing
+    elif model_name == "model3":
+        model = model3
+        flag = model.model_preprocessing
+    elif model_name == "model4":
+        model = model4
+        flag = model.model_preprocessing
+    elif model_name == "model5":
+        model = model5
+        flag = model.model_preprocessing
+    else:
+        raise Exception
+    if flag == 'regular' or flag == 'regular-without' or flag == 'second':
+        data_name = 'ANERCorp'
+    else:
+        data_name = 'NERCorp'
+    return  data_name
 
 def initialize_dropdown(sample, sentence_id, model_name):
     flag = False
-    if model_name == "squad":
+    if model_name == "model1":
         model = model1
-    elif model_name == "hotpot":
+        flag = model.model_preprocessing
+    elif model_name == "model2":
         model = model2
-    elif model_name == "babi":
+        flag = model.model_preprocessing
+    elif model_name == "model3":
         model = model3
-        flag = 'second'
-    elif model_name == "v2SecondToken":
+        flag = model.model_preprocessing
+    elif model_name == "model4":
         model = model4
-        flag = 'second'
-    elif model_name == "english":
+        flag = model.model_preprocessing
+    elif model_name == "model5":
         model = model5
-        flag = 'english'
+        flag = model.model_preprocessing
     else:
         raise Exception
 
@@ -159,19 +200,21 @@ def initialize_dropdown(sample, sentence_id, model_name):
 
 def tokenize_and_predict(sample, model_name):
     flag = False
-    if model_name == "squad":
+    if model_name == "model1":
         model = model1
-    elif model_name == "hotpot":
+        flag = model.model_preprocessing
+    elif model_name == "model2":
         model = model2
-    elif model_name == "babi":
+        flag = model.model_preprocessing
+    elif model_name == "model3":
         model = model3
-        flag = 'second'
-    elif model_name == "v2SecondToken":
+        flag = model.model_preprocessing
+    elif model_name == "model4":
         model = model4
-        flag = 'second'
-    elif model_name == "english":
+        flag = model.model_preprocessing
+    elif model_name == "model5":
         model = model5
-        flag = 'english'
+        flag = model.model_preprocessing
     else:
         raise Exception
 
@@ -194,15 +237,16 @@ def tokenize_and_predict(sample, model_name):
         end_time = current_milli_time()
         logger.info("Prediction Time: {} ms".format(end_time - start_time))
         if sample.mode == 'pretrained':
-            layer_outputs = parse_model_output(model.pretrained_ner_model, outputs, sample, input_features)
+            layer_outputs = parse_model_output(model.pretrained_ner_model, outputs, input_features)
         else:
-            layer_outputs = parse_model_output(model.ner_model, outputs, sample, input_features)
+            layer_outputs = parse_model_output(model.ner_model, outputs, input_features)
         return  layer_outputs, outputs[2], outputs[3], input_features
 
 
 def tokenize(input_sample, tokenizer, preprocessor, flag = False):
-    if flag == 'second':
-        features_processing = SecondSCDataset(
+
+    if flag == 'regular':
+        features_processing = SCDataset(
             texts=[input_sample.sentence],
             tags=[input_sample.labels],
             ner_labels=input_sample.ner_labels,
@@ -210,7 +254,7 @@ def tokenize(input_sample, tokenizer, preprocessor, flag = False):
             preprocess=True,
             tokenizer=tokenizer)
 
-    elif flag == 'english':
+    elif flag == 'regular-without' or flag == 'english':
         features_processing = SCDataset(
             texts=[input_sample.sentence],
             tags=[input_sample.labels],
@@ -218,8 +262,9 @@ def tokenize(input_sample, tokenizer, preprocessor, flag = False):
             preprocessor=preprocessor,
             preprocess=False,
             tokenizer=tokenizer)
+
     else:
-        features_processing = SCDataset(
+        features_processing = SecondSCDataset(
             texts=[input_sample.sentence],
             tags=[input_sample.labels],
             ner_labels=input_sample.ner_labels,
@@ -232,19 +277,21 @@ def tokenize(input_sample, tokenizer, preprocessor, flag = False):
 
 def compute_training_impact(model_name, features):
     flag = False
-    if model_name == "squad":
+    if model_name == "model1":
         model = model1
-    elif model_name == "hotpot":
+        flag = model.model_preprocessing
+    elif model_name == "model2":
         model = model2
-    elif model_name == "babi":
+        flag = model.model_preprocessing
+    elif model_name == "model3":
         model = model3
-        flag = 'second'
-    elif model_name == "v2SecondToken":
+        flag = model.model_preprocessing
+    elif model_name == "model4":
         model = model4
-        flag = 'second'
-    elif model_name == "english":
+        flag = model.model_preprocessing
+    elif model_name == "model5":
         model = model5
-        flag = 'english'
+        flag = model.model_preprocessing
     else:
         raise Exception
     training_impact = AttentionSimilarity(model.model_data,
@@ -254,7 +301,7 @@ def compute_training_impact(model_name, features):
                                           model.tokenizer,
                                           model.preprocessor,
                                           features.tokens)
-    impact_heatmap = training_impact.compute_similarity()
+    impact_heatmap = training_impact.compute_similarity(model.model_type)
     return impact_heatmap
 
 
@@ -465,7 +512,7 @@ class AttentionSimilarity:
         }
         return params
 
-    def compute_similarity(self):
+    def compute_similarity(self, model_type):
         example = []
 
         for i in tqdm(range(len(sample(self.data, self.sample_size))), desc='Reading Data'):
@@ -477,8 +524,14 @@ class AttentionSimilarity:
                 inputs = self.tokenizer.encode_plus(sentence_a, return_tensors='pt',  add_special_tokens=True)
             else:
                 inputs = self.tokenizer.encode_plus(self.preprocessor.preprocess(sentence_a), return_tensors='pt', add_special_tokens=True)
-            token_type_ids = inputs['token_type_ids']
-            input_ids = inputs['input_ids']
+
+            if model_type == 'xlm-roberta-base':
+                input_ids = inputs['input_ids']
+                token_type_ids = torch.zeros_like(input_ids)
+            else:
+                input_ids = inputs['input_ids']
+                token_type_ids = inputs['token_type_ids']
+
 
             model1_attention = self.model1(input_ids, token_type_ids=token_type_ids)[-1]
             model2_attention = self.model2(input_ids, token_type_ids=token_type_ids)[-1]
@@ -530,61 +583,72 @@ def init(args):
     global model5
 
     m1: BertNERModel = BertNERModel(
+        base_folder=args.base_folder,
         model_name=args.model1_name,
         model_file=os.path.join(args.base_folder, args.model1_name),
         data_path=os.path.join(args.base_folder, args.data1_dir),
         error_path=os.path.join(args.base_folder, args.model1_errors),
         tab_name=args.tab1_name,
         model_type=args.model1_type,
+        model_preprocessing=args.model1_preprocessing,
         cache_dir=os.path.join(args.base_folder, "tmp")
     )
     model1 = m1
-    logger.debug(f"Finished loading {args.model1_name}")
+    logger.debug(f"Finished loading First Model: {args.model1_name}")
 
     m2: BertNERModel = BertNERModel(
+        base_folder=args.base_folder,
         model_name=args.model2_name,
         model_file=os.path.join(args.base_folder, args.model2_name),
         data_path=os.path.join(args.base_folder, args.data1_dir),
         error_path=os.path.join(args.base_folder, args.model2_errors),
         tab_name=args.tab2_name,
-        model_type=args.model3_type,
+        model_type=args.model2_type,
+        model_preprocessing=args.model2_preprocessing,
         cache_dir=os.path.join(args.base_folder, "tmp"),
     )
     model2 = m2
-    logger.debug(f"Finished loading {args.model2_name}")
+    logger.debug(f"Finished loading Second Model: {args.model2_name}")
 
     m3: BertNERModel = BertNERModel(
+        base_folder=args.base_folder,
         model_name=args.model3_name,
         model_file=os.path.join(args.base_folder, args.model3_name),
         data_path=os.path.join(args.base_folder, args.data1_dir),
         error_path=os.path.join(args.base_folder, args.model3_errors),
         tab_name=args.tab3_name,
-        model_type=args.model1_type,
+        model_type=args.model3_type,
+        model_preprocessing=args.model3_preprocessing,
         cache_dir=os.path.join(args.base_folder, "tmp"),
     )
     model3 = m3
-    logger.debug(f"Finished loading {args.model3_name}")
+    logger.debug(f"Finished loading Third Model: {args.model3_name}")
 
     m4: BertNERModel = BertNERModel(
+        base_folder=args.base_folder,
         model_name=args.model4_name,
         model_file=os.path.join(args.base_folder, args.model4_name),
         data_path=os.path.join(args.base_folder, args.data1_dir),
         error_path=os.path.join(args.base_folder, args.model4_errors),
         tab_name=args.tab4_name,
-        model_type=args.model3_type,
+        model_type=args.model4_type,
+        model_preprocessing=args.model4_preprocessing,
         cache_dir=os.path.join(args.base_folder, "tmp"),
     )
     model4 = m4
-    logger.debug(f"Finished loading {args.model4_name}")
+    logger.debug(f"Finished loading Fourth Model: {args.model4_name}")
+
     m5: BertNERModel = BertNERModel(
+        base_folder=args.base_folder,
         model_name=args.model5_name,
         model_file=os.path.join(args.base_folder, args.model5_name),
         data_path=os.path.join(args.base_folder, args.data2_dir),
         error_path=os.path.join(args.base_folder, args.model5_errors),
         tab_name=args.tab5_name,
-        model_type=args.model4_type,
+        model_type=args.model5_type,
+        model_preprocessing=args.model5_preprocessing,
         cache_dir=os.path.join(args.base_folder, "tmp"),
     )
     model5 = m5
-    logger.debug(f"Finished loading {args.model5_name}")
+    logger.debug(f"Finished loading Fifth Model: {args.model5_name}")
 
