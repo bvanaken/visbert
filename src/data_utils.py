@@ -26,7 +26,7 @@ import torch
 import numpy as np
 from nltk import tokenize
 from pytorch_transformers.tokenization_bert import BasicTokenizer, whitespace_tokenize
-from transformers import BertModel
+from transformers import BertModel, XLMRobertaModel, AutoModel
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,6 @@ class InputFeatures(object):
         self.is_impossible = is_impossible
 
 class NERSample:
-    # def __init__(self, sample_id: str, sentence: List, sentence_labels: List,  labels: List, ner_labels: List):
     def __init__(self, sample_id: str, sentence: List, sentence_labels: List, labels: List, ner_labels: List, mode: str):
         self.sample_id = sample_id
         self.sentence = sentence
@@ -347,7 +346,7 @@ class SCModel(nn.Module):
     def __init__(self, num_tag, path):
         super(SCModel, self).__init__()
         self.num_tag = num_tag
-        self.bert = BertModel.from_pretrained(path, output_attentions=True, output_hidden_states=True)
+        self.bert = AutoModel.from_pretrained(path, output_attentions=True, output_hidden_states=True)
         self.bert_drop = nn.Dropout(0.3)
         self.out_tag = nn.Linear(self.bert.config.hidden_size, self.num_tag)
 
@@ -370,7 +369,5 @@ def align_predictions(predictions, label_ids, inv_label_map):
         for j in range(seq_len):
             if label_ids[i, j] != nn.CrossEntropyLoss().ignore_index:
                 out_label_list[i].append(inv_label_map[label_ids[i][j]])
-                # preds_list[i].append(f"{inv_label_map[preds[i][j]]}: {max(predictions[i, j]):.2f}")
-                # preds_list[i].append((inv_label_map[preds[i][j]], str(max(predictions[i, j]))))
                 preds_list[i].append((inv_label_map[preds[i][j]], max(predictions[i, j].tolist())))
     return out_label_list, preds_list
