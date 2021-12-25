@@ -56,12 +56,7 @@ class BertNERModel:
     def load_model(self):
         start_time = current_milli_time()
         if self.model_type == 'xlm-roberta-base':
-            # config = XLMRobertaConfig.from_pretrained(self.model_type, output_hidden_states=True, output_attentions=True,
-            #                                     cache_dir=self.cache_dir)
-            # pretrained_weights = torch.load(self.model_file, map_location=torch.device('cpu'))
-            # model = XLMRobertaModel.from_pretrained(self.model_type, state_dict=pretrained_weights,
-            #                                   config=config,
-            #                                   cache_dir=self.cache_dir)
+            # there was a problem loading xlmr using the normal approach because the pretrained weights was not matching the ner model weights so we had to lead the ner bert model staright which matches the loaded ner bin model
             model = AutoModel.from_pretrained(f'{self.base_folder}models/xlmr_ner')
         else:
             config = AutoConfig.from_pretrained(self.model_type, output_hidden_states=True, output_attentions=True, cache_dir=self.cache_dir)
