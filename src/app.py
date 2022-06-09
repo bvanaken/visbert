@@ -160,7 +160,7 @@ def generate_model_output(sample, model_name, layer_wise_reduction=False):
 def run():
     parser = argparse.ArgumentParser()
     parser.add_argument("model_dir", help="directory where model files are stored")
-    parser.add_argument("layer_wise", help="whether to apply PCA reduction layer wise")
+    parser.add_argument("layer_wise", help="whether to apply PCA reduction layer wise", action='store_false')
     args = parser.parse_args()
     global layer_wise
     layer_wise = args.layer_wise
