@@ -15,6 +15,7 @@ logging.basicConfig(format=FORMAT, level=os.environ.get("LOGLEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
 base_route = ""
+layer_wise = False
 
 app = Flask(__name__, static_url_path='/static')
 
@@ -59,7 +60,7 @@ def get_output():
               "answer": answer_dict,
               "sup_ids": sup_ids}
 
-    prediction, layers, token_indices = generate_model_output(sample, model_name)
+    prediction, layers, token_indices = generate_model_output(sample, model_name, layer_wise_reduction=layer_wise)
 
     output = {
         'hidden_states': layers,
@@ -70,7 +71,7 @@ def get_output():
     return jsonify(output)
 
 
-def generate_model_output(sample, model_name):
+def generate_model_output(sample, model_name, layer_wise_reduction=False):
     prediction, hidden_states, features = model.tokenize_and_predict(sample, model_name)
 
     start_time = current_milli_time()
@@ -79,28 +80,53 @@ def generate_model_output(sample, model_name):
     tokens = features.tokens
     layers = []
 
-    token_vectors = [layer[0][:len(tokens)] for layer in hidden_states]
+    if layer_wise_reduction:
 
-    flat_list = torch.cat(token_vectors)
-    layer_reduced = visualize.reduce(flat_list, "pca", 2)
+        for layer in hidden_states:
 
-    for i, layer in enumerate(hidden_states):
+            # cut off padding
+            token_vectors = layer[0][:len(tokens)]
 
-        pca_result_x = layer_reduced[0][len(tokens) * i:len(tokens) * i + len(tokens)]
-        pca_result_y = layer_reduced[1][len(tokens) * i:len(tokens) * i + len(tokens)]
+            # dimensionality reduction
+            layer_reduced = visualize.reduce(token_vectors, "pca", 2)
 
-        # build json with point information
-        points = []
-        for i, val in enumerate(pca_result_x):
-            point = {
-                'x': val,
-                'y': pca_result_y[i],
-                'label': tokens[i]
-            }
+            # build json with point information
+            points = []
+            for i, val in enumerate(layer_reduced[0]):
+                point = {
+                    'x': val,
+                    'y': layer_reduced[1][i],
+                    'label': tokens[i]
+                }
 
-            points.append(point)
+                points.append(point)
 
-        layers.append(points)
+            layers.append(points)
+
+    else:
+
+        token_vectors = [layer[0][:len(tokens)] for layer in hidden_states]
+
+        flat_list = torch.cat(token_vectors)
+        layer_reduced = visualize.reduce(flat_list, "pca", 2)
+
+        for i, layer in enumerate(hidden_states):
+
+            pca_result_x = layer_reduced[0][len(tokens) * i:len(tokens) * i + len(tokens)]
+            pca_result_y = layer_reduced[1][len(tokens) * i:len(tokens) * i + len(tokens)]
+
+            # build json with point information
+            points = []
+            for i, val in enumerate(pca_result_x):
+                point = {
+                    'x': val,
+                    'y': pca_result_y[i],
+                    'label': tokens[i]
+                }
+
+                points.append(point)
+
+            layers.append(points)
 
     # build indices object
     question_indices = get_question_indices(tokens)
@@ -134,7 +160,10 @@ def generate_model_output(sample, model_name):
 def run():
     parser = argparse.ArgumentParser()
     parser.add_argument("model_dir", help="directory where model files are stored")
+    parser.add_argument("layer_wise", help="whether to apply PCA reduction layer wise")
     args = parser.parse_args()
+    global layer_wise
+    layer_wise = args.layer_wise
 
     logger.debug("Init BERT models")
     model.init(args.model_dir)
