@@ -1,6 +1,6 @@
 Flask==1.1.1
 sklearn
 nltk
-torch==1.1.0
+torch==1.13.1
 pytorch-transformers==1.1.0
 waitress==2.1.2
